@@ -63,6 +63,7 @@ class _MapScreenState extends State<MapScreen> {
     final nowInLt = entriesHappeningNow(scheduleProvider.getSchedulesForLocation('LT_MAP'));
 
     return Stack(
+      fit: StackFit.expand,
       children: [
         Positioned.fill(
           child: GestureDetector(

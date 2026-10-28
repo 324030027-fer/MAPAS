@@ -3,10 +3,11 @@ import '../../models/lab_schedule.dart';
 
 String currentDayName() {
   final weekday = DateTime.now().weekday;
-  if (weekday >= 1 && weekday <= 5) {
+  if (weekday >= 1 && weekday <= kWeekDays.length) {
     return kWeekDays[weekday - 1];
   }
-  return kWeekDays[weekday - 1];
+  // Fin de semana: no hay clases.
+  return '';
 }
 
 int _minutesFromTime(String time) {
