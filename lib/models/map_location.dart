@@ -10,8 +10,8 @@ class HotspotLink {
   Map<String, dynamic> toJson() => {'targetId': targetId, 'yaw': yaw, 'pitch': pitch};
   factory HotspotLink.fromJson(Map<String, dynamic> json) => HotspotLink(
         targetId: json['targetId'],
-        yaw: json['yaw'],
-        pitch: json['pitch'],
+        yaw: (json['yaw'] as num?)?.toDouble() ?? 0.0,
+        pitch: (json['pitch'] as num?)?.toDouble() ?? 0.0,
       );
 }
 
@@ -54,6 +54,26 @@ class CareerInfo {
         name: json['name'],
         labs: (json['labs'] as List).map((e) => LabInfo.fromJson(e)).toList(),
       );
+}
+
+/// Resuelve el ícono por codePoint contra constantes conocidas, para que el
+/// tree-shaking de íconos funcione en release (sin IconData dinámicos).
+IconData _iconFromCodePoint(int? codePoint) {
+  if (codePoint == null) return Icons.place;
+  const icons = [
+    Icons.account_balance,
+    Icons.local_library,
+    Icons.class_outlined,
+    Icons.school,
+    Icons.restaurant,
+    Icons.sports_basketball,
+    Icons.science,
+    Icons.place,
+  ];
+  for (final icon in icons) {
+    if (icon.codePoint == codePoint) return icon;
+  }
+  return Icons.place;
 }
 
 class MapLocation {
@@ -107,14 +127,14 @@ class MapLocation {
       title: json['title'],
       description: json['description'],
       category: json['category'],
-      x: json['x'],
-      y: json['y'],
+      x: (json['x'] as num).toDouble(),
+      y: (json['y'] as num).toDouble(),
       assetImage360: json['assetImage360'],
-      icon: IconData(json['iconCodePoint'], fontFamily: json['iconFontFamily']),
-      features: json['features'],
-      equipmentImages: List<String>.from(json['equipmentImages']),
-      hotspotLinks: (json['hotspotLinks'] as List).map((e) => HotspotLink.fromJson(e)).toList(),
-      careers: (json['careers'] as List).map((e) => CareerInfo.fromJson(e)).toList(),
+      icon: _iconFromCodePoint(json['iconCodePoint'] as int?),
+      features: json['features'] ?? '',
+      equipmentImages: List<String>.from(json['equipmentImages'] ?? const []),
+      hotspotLinks: ((json['hotspotLinks'] ?? const []) as List).map((e) => HotspotLink.fromJson(e)).toList(),
+      careers: ((json['careers'] ?? const []) as List).map((e) => CareerInfo.fromJson(e)).toList(),
     );
   }
 

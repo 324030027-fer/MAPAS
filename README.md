@@ -1,22 +1,21 @@
-<<<<<<< HEAD
-# nullcore_maps
+# NULLCORE MAPS
 
-A new Flutter project.
+Mapa interactivo del campus universitario (UPJR) hecho en Flutter para Android, iOS y Web.
+Ayuda a estudiantes, aspirantes de nuevo ingreso y visitantes a ubicar sitios del campus.
 
-## Getting Started
+## Funciones
 
-This project is a starting point for a Flutter application.
+- Mapa interactivo con búsqueda y filtros por categoría
+- Recorridos virtuales 360° del campus
+- Horarios de laboratorios y buscador global (materia, profesor, grupo, día)
+- Directorio de contactos de profesores
+- Tema claro/oscuro y tutorial de bienvenida
+- Panel de administración para editar pins y horarios
 
-A few resources to get you started if this is your first Flutter project:
+## Ejecutar
 
-- [Lab: Write your first Flutter app](https://docs.flutter.dev/get-started/codelab)
-- [Cookbook: Useful Flutter samples](https://docs.flutter.dev/cookbook)
-
-For help getting started with Flutter development, view the
-[online documentation](https://docs.flutter.dev/), which offers tutorials,
-samples, guidance on mobile development, and a full API reference.
-# NULLCORE
-# NULLCORE
-=======
-# Mi Proyecto
->>>>>>> bd611f6cfa4ba448c351deba4b0dcc8d83379fe5
+```bash
+flutter pub get
+flutter run -d chrome   # web
+flutter run             # dispositivo conectado
+```
