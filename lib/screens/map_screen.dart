@@ -1,3 +1,5 @@
+import 'dart:ui' show ImageFilter;
+
 import 'package:flutter/material.dart';
 import 'package:go_router/go_router.dart';
 import 'package:provider/provider.dart';
@@ -66,14 +68,26 @@ class _MapScreenState extends State<MapScreen> {
     return Stack(
       fit: StackFit.expand,
       children: [
+        // Relleno estático: el mismo mapa desenfocado cubre toda el área para
+        // que no queden bandas vacías alrededor del mapa cuadrado.
+        Positioned.fill(
+          child: ClipRect(
+            child: ImageFiltered(
+              imageFilter: ImageFilter.blur(sigmaX: 24, sigmaY: 24),
+              child: Image.asset('assets/mapa_base.jpg', fit: BoxFit.cover),
+            ),
+          ),
+        ),
         Positioned.fill(
           child: GestureDetector(
             onTap: () => mapProvider.selectMapLocation(null),
+            // Mapa fijo: no se puede alejar ni sacar de los bordes; el zoom
+            // solo acerca y el desplazamiento queda limitado al mapa.
             child: InteractiveViewer(
               transformationController: _transformer,
-              minScale: 0.5,
+              minScale: 1.0,
               maxScale: 5.0,
-              boundaryMargin: const EdgeInsets.all(300),
+              boundaryMargin: EdgeInsets.zero,
               child: Center(
                 child: AspectRatio(
                   aspectRatio: 1,
