@@ -1,0 +1,33 @@
+// Copia local de motion_sensors 0.1.0 (dependencia de `panorama`).
+// El paquete original usa jcenter() y AGP 3.5, incompatibles con Gradle 9;
+// esta versión solo actualiza la configuración de Android.
+group 'finaldev.motion_sensors'
+version '1.0-SNAPSHOT'
+
+apply plugin: 'com.android.library'
+apply plugin: 'kotlin-android'
+
+android {
+    namespace 'finaldev.motion_sensors'
+    compileSdk 35
+
+    sourceSets {
+        main.java.srcDirs += 'src/main/kotlin'
+    }
+    defaultConfig {
+        minSdk 21
+    }
+    compileOptions {
+        sourceCompatibility JavaVersion.VERSION_17
+        targetCompatibility JavaVersion.VERSION_17
+    }
+    lint {
+        disable 'InvalidPackage'
+    }
+}
+
+kotlin {
+    compilerOptions {
+        jvmTarget = org.jetbrains.kotlin.gradle.dsl.JvmTarget.JVM_17
+    }
+}

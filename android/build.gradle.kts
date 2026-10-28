@@ -16,15 +16,7 @@ subprojects {
     project.layout.buildDirectory.value(newSubprojectBuildDir)
 }
 subprojects {
-    afterEvaluate {
-        if (hasProperty("android")) {
-            configure<com.android.build.gradle.LibraryExtension> {
-                if (namespace == null) {
-                    namespace = project.group.toString()
-                }
-            }
-        }
-    }
+    project.evaluationDependsOn(":app")
 }
 
 tasks.register<Delete>("clean") {

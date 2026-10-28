@@ -31,3 +31,6 @@ android/key.properties
 *.keystore
 ios/Pods/
 ios/.symlinks/
+
+# Android build outputs
+android/build/

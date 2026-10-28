@@ -42,6 +42,11 @@ dependencies:
   # Use with the CupertinoIcons class for iOS style icons.
   cupertino_icons: ^1.0.8
 
+# motion_sensors (usado por panorama) actualizado para compilar con Gradle 9.
+dependency_overrides:
+  motion_sensors:
+    path: third_party/motion_sensors
+
 dev_dependencies:
   flutter_test:
     sdk: flutter
