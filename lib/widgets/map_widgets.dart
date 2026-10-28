@@ -5,6 +5,7 @@ import '../core/theme/app_colors.dart';
 import '../providers/map_provider.dart';
 import '../providers/schedule_provider.dart';
 import '../screens/panorama_viewer.dart';
+import 'glass.dart';
 import 'lab_schedule_viewer.dart';
 
 // --- MARCADOR ---
@@ -40,17 +41,13 @@ class MapMarker extends StatelessWidget {
             ),
             Positioned(
               top: size + 6,
-              child: Container(
-                padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 4),
-                decoration: BoxDecoration(
-                  color: const Color(0xFF1E1E2C).withOpacity(0.9),
-                  borderRadius: BorderRadius.circular(6),
-                  border: Border.all(color: Colors.white.withOpacity(0.2)),
-                ),
+              child: ConstrainedBox(
                 constraints: const BoxConstraints(maxWidth: 140),
+                child: GlassTag(
                 child: Text(location.title, textAlign: TextAlign.center,
                   style: const TextStyle(fontSize: 10, fontWeight: FontWeight.bold, color: Colors.white),
                   maxLines: 2, overflow: TextOverflow.ellipsis),
+                ),
               ),
             ),
           ],
@@ -84,13 +81,12 @@ class LocationDetailSheet extends StatelessWidget {
     if (hasLaboratories) tabTitles.add('LABORATORIOS');
     if (hasSchedules) tabTitles.add('HORARIOS');
 
-    return Container(
-      decoration: BoxDecoration(
-        color: const Color(0xFF2D2D44),
-        borderRadius: const BorderRadius.vertical(top: Radius.circular(32)),
-        boxShadow: [BoxShadow(color: Colors.black.withOpacity(0.5), blurRadius: 30, offset: const Offset(0, -5))],
-        border: Border(top: BorderSide(color: Colors.white.withOpacity(0.1), width: 1)),
-      ),
+    return GlassContainer(
+      borderRadius: const BorderRadius.vertical(top: Radius.circular(32)),
+      blur: 28,
+      tint: const Color(0xFF23233A),
+      tintStrength: 3.4,
+      uniform: true,
       child: DefaultTabController(
         length: tabTitles.length,
         child: Column(

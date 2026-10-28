@@ -61,7 +61,6 @@ class _PanoramaViewerState extends State<PanoramaViewer> {
         zoom: 1.0, 
         animSpeed: 0.0, 
         sensitivity: 2.0,
-        child: Image.asset(currentLocation.assetImage360),
         hotspots: currentLocation.hotspotLinks.map((link) {
           final linkedLoc = provider.getTourLocationById(link.targetId);
           return Hotspot(
@@ -77,11 +76,11 @@ class _PanoramaViewerState extends State<PanoramaViewer> {
                   Container(
                     padding: const EdgeInsets.all(10),
                     decoration: BoxDecoration(
-                      color: Colors.white.withOpacity(0.9),
+                      color: Colors.white.withValues(alpha: 0.9),
                       shape: BoxShape.circle,
                       boxShadow: [
                         BoxShadow(
-                          color: const Color(0xFF6C63FF).withOpacity(0.5),
+                          color: const Color(0xFF6C63FF).withValues(alpha: 0.5),
                           blurRadius: 15
                         )
                       ]
@@ -107,6 +106,7 @@ class _PanoramaViewerState extends State<PanoramaViewer> {
             ),
           );
         }).toList(),
+        child: Image.asset(currentLocation.assetImage360),
       ),
     );
   }

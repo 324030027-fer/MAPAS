@@ -8,6 +8,7 @@ import '../../providers/map_provider.dart';
 import '../../providers/schedule_provider.dart';
 import 'admin_hub_screen.dart';
 import 'location_editor.dart';
+import '../../widgets/glass.dart';
 
 class AdminDashboard extends StatelessWidget {
   final bool embedded;
@@ -35,10 +36,8 @@ class AdminDashboard extends StatelessWidget {
             itemBuilder: (context, index) {
               final loc = provider.mapPoints[index];
               final hasSchedules = context.watch<ScheduleProvider>().hasSchedulesForLocation(loc.id);
-              return Card(
-                color: AppColors.darkSurface,
+              return GlassCard(
                 margin: const EdgeInsets.only(bottom: 12),
-                shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),
                 child: ListTile(
                   contentPadding: const EdgeInsets.symmetric(horizontal: 16, vertical: 8),
                   leading: CircleAvatar(
@@ -103,7 +102,8 @@ class AdminDashboard extends StatelessWidget {
       );
     }
 
-    return Scaffold(
+    return GlassScaffold(
+      forceDark: true,
       appBar: AppBar(title: const Text('Gestión de puntos')),
       backgroundColor: AppColors.darkBg,
       body: list,

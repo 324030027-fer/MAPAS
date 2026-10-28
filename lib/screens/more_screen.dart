@@ -7,6 +7,7 @@ import '../providers/auth_provider.dart';
 import '../providers/onboarding_provider.dart';
 import '../providers/theme_provider.dart';
 import '../widgets/admin_badge.dart';
+import '../widgets/glass.dart';
 
 class MoreScreen extends StatelessWidget {
   const MoreScreen({super.key});
@@ -17,8 +18,7 @@ class MoreScreen extends StatelessWidget {
     final theme = context.watch<ThemeProvider>();
     final isDark = Theme.of(context).brightness == Brightness.dark;
 
-    return Scaffold(
-      backgroundColor: isDark ? AppColors.darkBg : AppColors.lightBg,
+    return GlassScaffold(
       body: SafeArea(
         child: ListView(
           padding: const EdgeInsets.fromLTRB(20, 16, 20, 100),
@@ -42,7 +42,9 @@ class MoreScreen extends StatelessWidget {
             ),
             const SizedBox(height: 16),
             _SectionTitle('Preferencias', isDark: isDark),
-            SwitchListTile(
+            GlassCard(
+              margin: const EdgeInsets.only(bottom: 8),
+              child: SwitchListTile(
               secondary: Icon(
                 theme.isDark ? Icons.dark_mode : Icons.light_mode,
                 color: AppColors.accent,
@@ -58,6 +60,7 @@ class MoreScreen extends StatelessWidget {
               value: theme.isDark,
               activeThumbColor: AppColors.primary,
               onChanged: (_) => theme.toggle(),
+              ),
             ),
             if (auth.isAdmin) ...[
               const SizedBox(height: 16),
@@ -70,7 +73,9 @@ class MoreScreen extends StatelessWidget {
                 isDark: isDark,
                 accent: AppColors.admin,
               ),
-              SwitchListTile(
+              GlassCard(
+                margin: const EdgeInsets.only(bottom: 8),
+                child: SwitchListTile(
                 secondary: const Icon(Icons.visibility, color: AppColors.admin),
                 title: Text(
                   'Vista estudiante',
@@ -80,6 +85,7 @@ class MoreScreen extends StatelessWidget {
                 value: auth.previewAsStudent,
                 activeThumbColor: AppColors.admin,
                 onChanged: auth.setPreviewAsStudent,
+                ),
               ),
             ],
             const SizedBox(height: 16),
@@ -131,13 +137,9 @@ class _Header extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    return Container(
+    return GlassContainer(
+      radius: 24,
       padding: const EdgeInsets.all(20),
-      decoration: BoxDecoration(
-        color: isDark ? AppColors.darkSurface : Colors.white,
-        borderRadius: BorderRadius.circular(20),
-        border: Border.all(color: AppColors.primary.withValues(alpha: 0.2)),
-      ),
       child: Row(
         children: [
           CircleAvatar(
@@ -223,9 +225,8 @@ class _Tile extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     final color = accent ?? AppColors.accent;
-    return Card(
+    return GlassCard(
       margin: const EdgeInsets.only(bottom: 8),
-      color: isDark ? AppColors.darkSurface : Colors.white,
       child: ListTile(
         minVerticalPadding: 12,
         leading: Container(

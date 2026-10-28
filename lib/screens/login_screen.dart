@@ -3,6 +3,7 @@ import 'package:go_router/go_router.dart';
 import 'package:provider/provider.dart';
 import '../core/theme/app_colors.dart';
 import '../providers/auth_provider.dart';
+import '../widgets/glass.dart';
 
 class LoginScreen extends StatefulWidget {
   const LoginScreen({super.key});
@@ -22,7 +23,8 @@ class _LoginScreenState extends State<LoginScreen> {
   Widget build(BuildContext context) {
     final auth = Provider.of<AuthProvider>(context, listen: false);
 
-    return Scaffold(
+    return GlassScaffold(
+      forceDark: true,
       backgroundColor: AppColors.darkBg,
       body: SafeArea(
         child: Center(
@@ -44,7 +46,7 @@ class _LoginScreenState extends State<LoginScreen> {
                 Container(
                   padding: const EdgeInsets.all(16),
                   decoration: BoxDecoration(
-                    color: const Color(0xFF6C63FF).withOpacity(0.15),
+                    color: const Color(0xFF6C63FF).withValues(alpha: 0.15),
                     shape: BoxShape.circle,
                   ),
                   child: ClipOval(
@@ -107,12 +109,9 @@ class _LoginScreenState extends State<LoginScreen> {
                 const SizedBox(height: 48),
 
                 // ========== SECCIÓN INVITADO (nombre obligatorio) ==========
-                Card(
-                  color: const Color(0xFF2D2D44),
-                  shape: RoundedRectangleBorder(
-                    borderRadius: BorderRadius.circular(24),
-                  ),
-                  elevation: 4,
+                GlassCard(
+                  radius: 28,
+                  margin: EdgeInsets.zero,
                   child: Padding(
                     padding: const EdgeInsets.all(20),
                     child: Column(
@@ -187,11 +186,9 @@ class _LoginScreenState extends State<LoginScreen> {
                 const SizedBox(height: 24),
 
                 // ========== SECCIÓN ADMINISTRADOR (naranja) ==========
-                Card(
-                  color: const Color(0xFF2D2D44),
-                  shape: RoundedRectangleBorder(
-                    borderRadius: BorderRadius.circular(24),
-                  ),
+                GlassCard(
+                  radius: 28,
+                  margin: EdgeInsets.zero,
                   child: Theme(
                     data: Theme.of(context).copyWith(dividerColor: Colors.transparent),
                     child: ExpansionTile(

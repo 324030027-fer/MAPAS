@@ -1,4 +1,5 @@
 import 'package:flutter/material.dart';
+import '../widgets/glass.dart';
 
 class TeacherScheduleScreen extends StatefulWidget {
   const TeacherScheduleScreen({super.key});
@@ -80,7 +81,8 @@ class _TeacherScheduleScreenState extends State<TeacherScheduleScreen>
 
   @override
   Widget build(BuildContext context) {
-    return Scaffold(
+    return GlassScaffold(
+      forceDark: true,
       backgroundColor: const Color(0xFF1E1E2C),
       body: SafeArea(
         child: Column(
@@ -240,19 +242,10 @@ class _ScheduleCard extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    return Container(
+    return GlassContainer(
       margin: const EdgeInsets.only(bottom: 12),
-      decoration: BoxDecoration(
-        color: const Color(0xFF2D2D44),
-        borderRadius: BorderRadius.circular(20),
-        boxShadow: [
-          BoxShadow(
-            color: Colors.black.withOpacity(0.2),
-            blurRadius: 8,
-            offset: const Offset(0, 3),
-          ),
-        ],
-      ),
+      radius: 20,
+      blur: 14,
       child: Padding(
         padding: const EdgeInsets.all(16),
         child: Row(

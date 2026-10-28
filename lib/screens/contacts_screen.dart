@@ -1,5 +1,6 @@
 import 'package:flutter/material.dart';
 import 'teacher_profile_screen.dart';
+import '../widgets/glass.dart';
 
 class Contact {
   final String id;
@@ -74,7 +75,8 @@ class ContactsScreen extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    return Scaffold(
+    return GlassScaffold(
+      forceDark: true,
       backgroundColor: const Color(0xFF1E1E2C),
       appBar: AppBar(
         title: const Text('Contactos'),
@@ -85,12 +87,8 @@ class ContactsScreen extends StatelessWidget {
         itemCount: teachers.length,
         itemBuilder: (ctx, index) {
           final teacher = teachers[index];
-          return Card(
+          return GlassCard(
             margin: const EdgeInsets.symmetric(horizontal: 16, vertical: 8),
-            color: const Color(0xFF2D2D44),
-            shape: RoundedRectangleBorder(
-              borderRadius: BorderRadius.circular(16),
-            ),
             child: ListTile(
               leading: CircleAvatar(
                 backgroundImage: ResizeImage(AssetImage(teacher.imageAsset), width: 300),

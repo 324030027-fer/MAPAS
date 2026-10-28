@@ -7,6 +7,7 @@ import '../../core/utils/schedule_utils.dart';
 import '../../models/lab_schedule.dart';
 import '../../providers/map_provider.dart';
 import '../../providers/schedule_provider.dart';
+import '../../widgets/glass.dart';
 
 class ScheduleAdminScreen extends StatefulWidget {
   final bool embedded;
@@ -81,7 +82,8 @@ class _ScheduleAdminScreenState extends State<ScheduleAdminScreen> {
       return ColoredBox(color: AppColors.darkBg, child: content);
     }
 
-    return Scaffold(
+    return GlassScaffold(
+      forceDark: true,
       backgroundColor: AppColors.darkBg,
       appBar: AppBar(
         title: const Text('Horarios de laboratorios'),
@@ -124,7 +126,7 @@ class _ScheduleAdminScreenState extends State<ScheduleAdminScreen> {
           const Text('Edificio', style: TextStyle(color: Colors.white70, fontSize: 12)),
           const SizedBox(height: 6),
           DropdownButtonFormField<String>(
-            value: _selectedLocationId,
+            initialValue: _selectedLocationId,
             dropdownColor: const Color(0xFF2D2D44),
             style: const TextStyle(color: Colors.white),
             decoration: _inputDecoration(),
@@ -157,7 +159,7 @@ class _ScheduleAdminScreenState extends State<ScheduleAdminScreen> {
                     const Text('Laboratorio', style: TextStyle(color: Colors.white70, fontSize: 12)),
                     const SizedBox(height: 6),
                     DropdownButtonFormField<int>(
-                      value: labs.isEmpty ? null : _selectedLabIndex,
+                      initialValue: labs.isEmpty ? null : _selectedLabIndex,
                       dropdownColor: const Color(0xFF2D2D44),
                       style: const TextStyle(color: Colors.white),
                       decoration: _inputDecoration(),

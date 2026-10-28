@@ -9,6 +9,7 @@ import '../providers/auth_provider.dart';
 import '../providers/map_provider.dart';
 import '../providers/schedule_provider.dart';
 import '../widgets/admin_badge.dart';
+import '../widgets/glass.dart';
 import '../widgets/grid_painter.dart';
 import '../widgets/map_onboarding_overlay.dart';
 import '../widgets/map_widgets.dart';
@@ -134,7 +135,7 @@ class _MapScreenState extends State<MapScreen> {
               gradient: LinearGradient(
                 begin: Alignment.topCenter,
                 end: Alignment.bottomCenter,
-                colors: [bg.withValues(alpha: 0.95), bg.withValues(alpha: 0)],
+                colors: [bg.withValues(alpha: 0.55), bg.withValues(alpha: 0)],
               ),
             ),
             child: Column(
@@ -178,7 +179,10 @@ class _MapScreenState extends State<MapScreen> {
                   ],
                 ),
                 const SizedBox(height: 12),
-                TextField(
+                GlassContainer(
+                  radius: 18,
+                  blur: 16,
+                  child: TextField(
                   controller: _searchController,
                   onChanged: (v) => setState(() => _searchQuery = v.trim()),
                   style: TextStyle(color: isDark ? Colors.white : AppColors.textPrimaryLight),
@@ -195,13 +199,12 @@ class _MapScreenState extends State<MapScreen> {
                             },
                           )
                         : null,
-                    filled: true,
-                    fillColor: isDark ? AppColors.darkSurface : Colors.white,
-                    border: OutlineInputBorder(
-                      borderRadius: BorderRadius.circular(16),
-                      borderSide: BorderSide.none,
-                    ),
-                    contentPadding: const EdgeInsets.symmetric(vertical: 0),
+                    filled: false,
+                    border: InputBorder.none,
+                    enabledBorder: InputBorder.none,
+                    focusedBorder: InputBorder.none,
+                    contentPadding: const EdgeInsets.symmetric(vertical: 14),
+                  ),
                   ),
                 ),
                 const SizedBox(height: 10),
@@ -213,16 +216,26 @@ class _MapScreenState extends State<MapScreen> {
                       final selected = (_categoryFilter ?? 'Todos') == cat;
                       return Padding(
                         padding: const EdgeInsets.only(right: 8),
-                        child: FilterChip(
-                          label: Text(cat, style: const TextStyle(fontSize: 12)),
-                          selected: selected,
-                          onSelected: (_) => setState(() => _categoryFilter = cat == 'Todos' ? null : cat),
-                          selectedColor: AppColors.primary,
-                          checkmarkColor: Colors.white,
-                          labelStyle: TextStyle(
-                            color: selected ? Colors.white : (isDark ? Colors.white70 : AppColors.textSecondaryLight),
+                        child: GestureDetector(
+                          onTap: () => setState(() => _categoryFilter = cat == 'Todos' ? null : cat),
+                          child: GlassContainer(
+                            radius: 18,
+                            blur: 14,
+                            shadow: false,
+                            tint: selected ? AppColors.primary : null,
+                            tintStrength: selected ? 2.4 : 1,
+                            padding: const EdgeInsets.symmetric(horizontal: 14),
+                            child: Center(
+                              child: Text(
+                                cat,
+                                style: TextStyle(
+                                  fontSize: 12,
+                                  fontWeight: selected ? FontWeight.w800 : FontWeight.w600,
+                                  color: selected || isDark ? Colors.white : AppColors.textPrimaryLight,
+                                ),
+                              ),
+                            ),
                           ),
-                          backgroundColor: isDark ? AppColors.darkSurface : AppColors.lightBg,
                         ),
                       );
                     }).toList(),
@@ -239,15 +252,15 @@ class _MapScreenState extends State<MapScreen> {
             left: 16,
             right: 16,
             bottom: 100,
-            child: Material(
-              color: AppColors.darkSurface.withValues(alpha: 0.95),
-              borderRadius: BorderRadius.circular(16),
+            child: GlassContainer(
+              radius: 20,
+              blur: 20,
               child: InkWell(
                 onTap: () {
                   final lt = mapProvider.mapPoints.firstWhere((l) => l.id == 'LT_MAP');
                   mapProvider.selectMapLocation(lt);
                 },
-                borderRadius: BorderRadius.circular(16),
+                borderRadius: BorderRadius.circular(20),
                 child: Padding(
                   padding: const EdgeInsets.all(14),
                   child: Row(
@@ -273,12 +286,15 @@ class _MapScreenState extends State<MapScreen> {
                               nowInLt.first.subject,
                               maxLines: 1,
                               overflow: TextOverflow.ellipsis,
-                              style: const TextStyle(color: Colors.white, fontWeight: FontWeight.w600),
+                              style: TextStyle(
+                                color: isDark ? Colors.white : AppColors.textPrimaryLight,
+                                fontWeight: FontWeight.w600,
+                              ),
                             ),
                           ],
                         ),
                       ),
-                      const Icon(Icons.chevron_right, color: Colors.white54),
+                      Icon(Icons.chevron_right, color: isDark ? Colors.white54 : Colors.black45),
                     ],
                   ),
                 ),

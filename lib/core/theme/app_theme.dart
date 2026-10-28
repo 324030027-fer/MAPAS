@@ -23,7 +23,8 @@ abstract final class AppTheme {
         surface: surface,
       ),
       appBarTheme: AppBarTheme(
-        backgroundColor: bg,
+        backgroundColor: Colors.transparent,
+        scrolledUnderElevation: 0,
         foregroundColor: isDark ? AppColors.textPrimaryDark : AppColors.textPrimaryLight,
         elevation: 0,
       ),

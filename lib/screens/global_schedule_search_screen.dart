@@ -8,6 +8,7 @@ import '../providers/map_provider.dart';
 import '../providers/schedule_provider.dart';
 import '../widgets/empty_state.dart';
 import '../models/lab_schedule.dart';
+import '../widgets/glass.dart';
 
 class GlobalScheduleSearchScreen extends StatefulWidget {
   const GlobalScheduleSearchScreen({super.key});
@@ -34,7 +35,7 @@ class _GlobalScheduleSearchScreenState extends State<GlobalScheduleSearchScreen>
     final isDark = Theme.of(context).brightness == Brightness.dark;
     final results = _search(scheduleProvider, mapProvider);
 
-    return Scaffold(
+    return GlassScaffold(
       backgroundColor: isDark ? AppColors.darkBg : AppColors.lightBg,
       appBar: AppBar(
         title: const Text('Buscar horarios'),
@@ -87,9 +88,8 @@ class _GlobalScheduleSearchScreenState extends State<GlobalScheduleSearchScreen>
                     itemBuilder: (context, i) {
                       final r = results[i];
                       final now = isScheduleEntryNow(r.entry);
-                      return Card(
+                      return GlassCard(
                         margin: const EdgeInsets.only(bottom: 10),
-                        color: isDark ? AppColors.darkSurface : Colors.white,
                         child: ListTile(
                           leading: Container(
                             width: 52,

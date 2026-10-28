@@ -3,6 +3,7 @@ import 'package:go_router/go_router.dart';
 import 'dart:async';
 
 import '../core/theme/app_colors.dart';
+import '../widgets/glass.dart';
 
 class SplashScreen extends StatefulWidget {
   const SplashScreen({super.key});
@@ -41,7 +42,8 @@ class _SplashScreenState extends State<SplashScreen> with SingleTickerProviderSt
 
   @override
   Widget build(BuildContext context) {
-    return Scaffold(
+    return GlassScaffold(
+      forceDark: true,
       backgroundColor: AppColors.darkBg,
       body: Center(
         child: Column(

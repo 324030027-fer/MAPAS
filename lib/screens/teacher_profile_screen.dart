@@ -1,6 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:url_launcher/url_launcher.dart'; // ← Agregar esta importación
 import 'contacts_screen.dart';
+import '../widgets/glass.dart';
 
 class TeacherProfileScreen extends StatelessWidget {
   final Contact teacher;
@@ -25,7 +26,8 @@ class TeacherProfileScreen extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    return Scaffold(
+    return GlassScaffold(
+      forceDark: true,
       backgroundColor: const Color(0xFF1E1E2C),
       appBar: AppBar(
         title: const Text('Perfil del Profesor'),

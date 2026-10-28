@@ -8,6 +8,7 @@ import '../widgets/empty_state.dart';
 import 'contacts_screen.dart';
 import 'panorama_viewer.dart';
 import 'teacher_profile_screen.dart';
+import '../widgets/glass.dart';
 
 class ToursScreen extends StatelessWidget {
   const ToursScreen({super.key});
@@ -18,7 +19,7 @@ class ToursScreen extends StatelessWidget {
     final startingPoint = mapProvider.getTourLocationById('E1');
     final isDark = Theme.of(context).brightness == Brightness.dark;
 
-    return Scaffold(
+    return GlassScaffold(
       backgroundColor: isDark ? AppColors.darkBg : AppColors.lightBg,
       body: SafeArea(
         child: CustomScrollView(
@@ -103,11 +104,10 @@ class ToursScreen extends StatelessWidget {
               delegate: SliverChildBuilderDelegate(
                 (context, index) {
                   final teacher = teachers[index];
-                  return Padding(
-                    padding: const EdgeInsets.symmetric(horizontal: 20, vertical: 6),
+                  return GlassCard(
+                    margin: const EdgeInsets.symmetric(horizontal: 20, vertical: 6),
+                    radius: 18,
                     child: ListTile(
-                      tileColor: isDark ? AppColors.darkSurface : Colors.white,
-                      shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(16)),
                       leading: CircleAvatar(
                         backgroundColor: AppColors.primary.withValues(alpha: 0.2),
                         child: const Icon(Icons.person, color: AppColors.primary),
@@ -288,6 +288,7 @@ class _Lab360List extends StatelessWidget {
               width: 160,
               decoration: BoxDecoration(
                 borderRadius: BorderRadius.circular(16),
+                border: Border.all(color: Colors.white.withValues(alpha: 0.28)),
                 image: DecorationImage(image: ResizeImage(AssetImage(lab.asset), width: 500), fit: BoxFit.cover),
               ),
               child: Container(

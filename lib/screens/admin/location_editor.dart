@@ -2,6 +2,7 @@ import 'package:flutter/material.dart';
 import 'package:provider/provider.dart';
 import '../../providers/map_provider.dart';
 import '../../models/map_location.dart';
+import '../../widgets/glass.dart';
 
 class LocationEditor extends StatefulWidget {
   final MapLocation location;
@@ -47,7 +48,8 @@ class _LocationEditorState extends State<LocationEditor> {
 
   @override
   Widget build(BuildContext context) {
-    return Scaffold(
+    return GlassScaffold(
+      forceDark: true,
       appBar: AppBar(
         title: const Text("Editar Ubicación"),
         backgroundColor: const Color(0xFF1E1E2C),

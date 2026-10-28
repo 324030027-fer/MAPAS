@@ -6,6 +6,7 @@ import '../../models/map_location.dart';
 import '../../providers/map_provider.dart';
 import '../../widgets/grid_painter.dart';
 import '../../widgets/map_widgets.dart';
+import '../../widgets/glass.dart';
 
 class MapPinEditorScreen extends StatefulWidget {
   final bool embedded;
@@ -151,7 +152,8 @@ class _MapPinEditorScreenState extends State<MapPinEditorScreen> {
       return ColoredBox(color: AppColors.darkBg, child: body);
     }
 
-    return Scaffold(
+    return GlassScaffold(
+      forceDark: true,
       backgroundColor: AppColors.darkBg,
       appBar: AppBar(title: const Text('Editor visual de pins')),
       body: body,

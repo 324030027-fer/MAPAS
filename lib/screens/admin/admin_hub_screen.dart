@@ -8,6 +8,7 @@ import '../../providers/schedule_provider.dart';
 import 'admin_dashboard.dart';
 import 'map_pin_editor_screen.dart';
 import 'schedule_admin_screen.dart';
+import '../../widgets/glass.dart';
 
 class AdminHubScreen extends StatelessWidget {
   const AdminHubScreen({super.key});
@@ -22,7 +23,8 @@ class AdminHubScreen extends StatelessWidget {
 
     return DefaultTabController(
       length: 4,
-      child: Scaffold(
+      child: GlassScaffold(
+      forceDark: true,
         backgroundColor: AppColors.darkBg,
         appBar: AppBar(
           title: const Text('Panel de administración'),
