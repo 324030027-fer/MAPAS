@@ -118,8 +118,8 @@ class _TeacherScheduleScreenState extends State<TeacherScheduleScreen>
                     decoration: BoxDecoration(
                       shape: BoxShape.circle,
                       border: Border.all(color: const Color(0xFFFF8C00), width: 2),
-                      image: const DecorationImage(
-                        image: AssetImage('assets/erickphoto.png'),
+                      image: DecorationImage(
+                        image: ResizeImage(AssetImage('assets/erickphoto.png'), width: 300),
                         fit: BoxFit.cover,
                       ),
                     ),

@@ -38,7 +38,7 @@ class TeacherProfileScreen extends StatelessWidget {
           children: [
             CircleAvatar(
               radius: 60,
-              backgroundImage: AssetImage(teacher.imageAsset),
+              backgroundImage: ResizeImage(AssetImage(teacher.imageAsset), width: 300),
               backgroundColor: Colors.grey[800],
             ),
             const SizedBox(height: 16),

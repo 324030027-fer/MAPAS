@@ -299,7 +299,7 @@ class LocationDetailSheet extends StatelessWidget {
             children: [
               ClipRRect(
                 borderRadius: BorderRadius.circular(8),
-                child: Image.asset(lab.imageThumbnail, width: 60, height: 60, fit: BoxFit.cover,
+                child: Image.asset(lab.imageThumbnail, width: 60, height: 60, cacheWidth: 180, fit: BoxFit.cover,
                   errorBuilder: (_, __, ___) => const Icon(Icons.broken_image, color: Colors.white54)),
               ),
               const SizedBox(width: 12),
@@ -380,6 +380,7 @@ class _LocationPhotoCarouselState extends State<_LocationPhotoCarousel> {
                 imagePath,
                 width: double.infinity,
                 height: 250,
+                cacheWidth: 900,
                 fit: BoxFit.cover,
                 errorBuilder: (_, __, ___) =>
                     const Icon(Icons.broken_image, color: Colors.white54, size: 80),
@@ -443,7 +444,7 @@ void _showFullImageDialog(BuildContext context, String imagePath) {
             maxScale: 4.0,
             child: ClipRRect(
               borderRadius: BorderRadius.circular(24),
-              child: Image.asset(imagePath, fit: BoxFit.contain, width: double.infinity),
+              child: Image.asset(imagePath, fit: BoxFit.contain, width: double.infinity, cacheWidth: 1600),
             ),
           ),
           Positioned(

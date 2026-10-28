@@ -169,7 +169,7 @@ class _TourCard extends StatelessWidget {
         height: 220,
         decoration: BoxDecoration(
           borderRadius: BorderRadius.circular(24),
-          image: DecorationImage(image: AssetImage(imageAsset), fit: BoxFit.cover),
+          image: DecorationImage(image: ResizeImage(AssetImage(imageAsset), width: 1000), fit: BoxFit.cover),
           boxShadow: [
             BoxShadow(
               color: AppColors.primary.withValues(alpha: 0.35),
@@ -288,7 +288,7 @@ class _Lab360List extends StatelessWidget {
               width: 160,
               decoration: BoxDecoration(
                 borderRadius: BorderRadius.circular(16),
-                image: DecorationImage(image: AssetImage(lab.asset), fit: BoxFit.cover),
+                image: DecorationImage(image: ResizeImage(AssetImage(lab.asset), width: 500), fit: BoxFit.cover),
               ),
               child: Container(
                 alignment: Alignment.bottomLeft,

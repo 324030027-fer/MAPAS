@@ -93,7 +93,7 @@ class ContactsScreen extends StatelessWidget {
             ),
             child: ListTile(
               leading: CircleAvatar(
-                backgroundImage: AssetImage(teacher.imageAsset),
+                backgroundImage: ResizeImage(AssetImage(teacher.imageAsset), width: 300),
                 backgroundColor: Colors.grey,
               ),
               title: Text(
