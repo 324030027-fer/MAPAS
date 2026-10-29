@@ -71,10 +71,12 @@ class _MapScreenState extends State<MapScreen> {
         // Relleno estático: el mismo mapa desenfocado cubre toda el área para
         // que no queden bandas vacías alrededor del mapa cuadrado.
         Positioned.fill(
-          child: ClipRect(
-            child: ImageFiltered(
-              imageFilter: ImageFilter.blur(sigmaX: 24, sigmaY: 24),
-              child: Image.asset('assets/mapa_base.jpg', fit: BoxFit.cover),
+          child: RepaintBoundary(
+            child: ClipRect(
+              child: ImageFiltered(
+                imageFilter: ImageFilter.blur(sigmaX: 24, sigmaY: 24),
+                child: Image.asset('assets/mapa_base.jpg', fit: BoxFit.cover, cacheWidth: 512),
+              ),
             ),
           ),
         ),
@@ -195,7 +197,7 @@ class _MapScreenState extends State<MapScreen> {
                 const SizedBox(height: 12),
                 GlassContainer(
                   radius: 18,
-                  blur: 16,
+                  blur: 10,
                   child: TextField(
                   controller: _searchController,
                   onChanged: (v) => setState(() => _searchQuery = v.trim()),
@@ -234,7 +236,7 @@ class _MapScreenState extends State<MapScreen> {
                           onTap: () => setState(() => _categoryFilter = cat == 'Todos' ? null : cat),
                           child: GlassContainer(
                             radius: 18,
-                            blur: 14,
+                            blur: 0,
                             shadow: false,
                             tint: selected ? AppColors.primary : null,
                             tintStrength: selected ? 2.4 : 1,
@@ -268,7 +270,7 @@ class _MapScreenState extends State<MapScreen> {
             bottom: 100,
             child: GlassContainer(
               radius: 20,
-              blur: 20,
+              blur: 12,
               child: InkWell(
                 onTap: () {
                   final lt = mapProvider.mapPoints.firstWhere((l) => l.id == 'LT_MAP');
@@ -331,9 +333,11 @@ class _MapScreenState extends State<MapScreen> {
 
         if (mapProvider.selectedMapLocation != null)
           DraggableScrollableSheet(
-            initialChildSize: 0.45,
+            initialChildSize: 0.5,
             minChildSize: 0.22,
             maxChildSize: 0.92,
+            snap: true,
+            snapSizes: const [0.5, 0.92],
             builder: (context, scrollController) {
               return LocationDetailSheet(
                 location: mapProvider.selectedMapLocation!,

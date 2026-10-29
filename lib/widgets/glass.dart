@@ -46,6 +46,27 @@ class GlassContainer extends StatelessWidget {
     final topAlpha = (isDark ? 0.20 : 0.62) * tintStrength;
     final bottomAlpha = uniform ? topAlpha : (isDark ? 0.07 : 0.30) * tintStrength;
 
+    // Capa de cristal (tinte + borde). Con blur 0 se usa sola, sin el costo del
+    // desenfoque del fondo (útil para elementos pequeños y repetidos).
+    final surface = DecoratedBox(
+      decoration: BoxDecoration(
+        borderRadius: br,
+        gradient: LinearGradient(
+          begin: Alignment.topLeft,
+          end: Alignment.bottomRight,
+          colors: [
+            base.withValues(alpha: topAlpha),
+            base.withValues(alpha: bottomAlpha),
+          ],
+        ),
+        border: Border.all(
+          color: Colors.white.withValues(alpha: isDark ? 0.22 : 0.7),
+          width: 1,
+        ),
+      ),
+      child: Padding(padding: padding ?? EdgeInsets.zero, child: child),
+    );
+
     return Container(
       width: width,
       height: height,
@@ -64,26 +85,9 @@ class GlassContainer extends StatelessWidget {
       ),
       child: ClipRRect(
         borderRadius: br,
-        child: BackdropFilter(
+        child: blur <= 0 ? surface : BackdropFilter(
           filter: ImageFilter.blur(sigmaX: blur, sigmaY: blur),
-          child: DecoratedBox(
-            decoration: BoxDecoration(
-              borderRadius: br,
-              gradient: LinearGradient(
-                begin: Alignment.topLeft,
-                end: Alignment.bottomRight,
-                colors: [
-                  base.withValues(alpha: topAlpha),
-                  base.withValues(alpha: bottomAlpha),
-                ],
-              ),
-              border: Border.all(
-                color: Colors.white.withValues(alpha: isDark ? 0.22 : 0.7),
-                width: 1,
-              ),
-            ),
-            child: Padding(padding: padding ?? EdgeInsets.zero, child: child),
-          ),
+          child: surface,
         ),
       ),
     );

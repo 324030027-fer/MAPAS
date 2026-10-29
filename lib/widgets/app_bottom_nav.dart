@@ -43,7 +43,7 @@ class AppBottomNav extends StatelessWidget {
               padding: const EdgeInsets.symmetric(horizontal: 16),
               child: GlassContainer(
                 radius: 34,
-                blur: 24,
+                blur: 14,
                 uniform: true,
                 tintStrength: 1.35,
                 height: _height,
@@ -54,8 +54,8 @@ class AppBottomNav extends StatelessWidget {
                       children: [
                         // Burbuja de selección que se desliza entre opciones.
                         AnimatedPositioned(
-                          duration: const Duration(milliseconds: 380),
-                          curve: Curves.easeOutBack,
+                          duration: const Duration(milliseconds: 260),
+                          curve: Curves.easeOutCubic,
                           left: _inset + slotWidth * selectedIndex,
                           top: _inset,
                           bottom: _inset,
@@ -119,8 +119,8 @@ class AppBottomNav extends StatelessWidget {
         child: Center(
           child: AnimatedScale(
             scale: selected ? 1.12 : 1.0,
-            duration: const Duration(milliseconds: 300),
-            curve: Curves.easeOutBack,
+            duration: const Duration(milliseconds: 200),
+            curve: Curves.easeOut,
             child: Column(
               mainAxisSize: MainAxisSize.min,
               children: [

@@ -77,13 +77,17 @@ class LocationDetailSheet extends StatelessWidget {
     final bool hasLaboratories = location.careers.isNotEmpty;
     final bool hasSchedules = schedules.isNotEmpty;
 
+    // Espacio para la barra de navegación flotante (66 de alto + 14 de margen
+    // + área segura inferior): el contenido llega a verse completo al final.
+    final double navInset = 92 + MediaQuery.of(context).padding.bottom;
+
     List<String> tabTitles = ['DESCRIPCIÓN', 'FOTOS'];
     if (hasLaboratories) tabTitles.add('LABORATORIOS');
     if (hasSchedules) tabTitles.add('HORARIOS');
 
     return GlassContainer(
       borderRadius: const BorderRadius.vertical(top: Radius.circular(32)),
-      blur: 28,
+      blur: 16,
       tint: const Color(0xFF23233A),
       tintStrength: 3.4,
       uniform: true,
@@ -91,6 +95,13 @@ class LocationDetailSheet extends StatelessWidget {
         length: tabTitles.length,
         child: Column(
           children: [
+            // Cabecera arrastrable: al estar ligada al scrollController de
+            // DraggableScrollableSheet, arrastrarla sube/baja la hoja.
+            SingleChildScrollView(
+              controller: scrollController,
+              physics: const AlwaysScrollableScrollPhysics(),
+              child: Column(
+                children: [
             Center(child: Container(width: 40, height: 4, margin: const EdgeInsets.only(top: 12, bottom: 8),
                 decoration: BoxDecoration(color: Colors.white24, borderRadius: BorderRadius.circular(2)))),
             Padding(
@@ -142,12 +153,15 @@ class LocationDetailSheet extends StatelessWidget {
               unselectedLabelColor: Colors.white70,
               tabs: tabTitles.map((title) => Tab(text: title)).toList(),
             ),
+                ],
+              ),
+            ),
             Expanded(
               child: TabBarView(
                 children: [
                   // DESCRIPCIÓN MEJORADA
                   SingleChildScrollView(
-                    padding: const EdgeInsets.all(24),
+                    padding: EdgeInsets.fromLTRB(24, 24, 24, 24 + navInset),
                     child: Column(
                       crossAxisAlignment: CrossAxisAlignment.start,
                       children: [
@@ -225,17 +239,17 @@ class LocationDetailSheet extends StatelessWidget {
                       ],
                     ),
                   ),
-                  _LocationPhotoCarousel(images: location.equipmentImages),
+                  _LocationPhotoCarousel(images: location.equipmentImages, bottomInset: navInset),
                   // LABORATORIOS (si existen)
                   if (hasLaboratories)
                     SingleChildScrollView(
-                      padding: const EdgeInsets.all(24),
+                      padding: EdgeInsets.fromLTRB(24, 24, 24, 24 + navInset),
                       child: Column(children: location.careers.map((career) => _buildCareerSection(context, career)).toList()),
                     ),
                   // HORARIOS (si existen)
                   if (hasSchedules)
                     SingleChildScrollView(
-                      padding: const EdgeInsets.all(24),
+                      padding: EdgeInsets.fromLTRB(24, 24, 24, 24 + navInset),
                       child: LabScheduleViewer(schedules: schedules),
                     ),
                 ],
@@ -343,8 +357,9 @@ class LocationDetailSheet extends StatelessWidget {
 
 class _LocationPhotoCarousel extends StatefulWidget {
   final List<String> images;
+  final double bottomInset;
 
-  const _LocationPhotoCarousel({required this.images});
+  const _LocationPhotoCarousel({required this.images, this.bottomInset = 0});
 
   @override
   State<_LocationPhotoCarousel> createState() => _LocationPhotoCarouselState();
@@ -363,11 +378,17 @@ class _LocationPhotoCarouselState extends State<_LocationPhotoCarousel> {
 
     final imagePath = widget.images[_currentIndex];
 
-    return Column(
-      mainAxisAlignment: MainAxisAlignment.center,
+    return LayoutBuilder(
+      builder: (context, constraints) {
+        // La foto se adapta al alto disponible (entre 120 y 250) y todo el
+        // bloque se puede desplazar, así nunca desborda la hoja.
+        final imageHeight = (constraints.maxHeight - 110).clamp(120.0, 250.0);
+        return SingleChildScrollView(
+          padding: EdgeInsets.only(top: 8, bottom: widget.bottomInset),
+          child: Column(
       children: [
         SizedBox(
-          height: 250,
+          height: imageHeight,
           child: GestureDetector(
             onTap: () => _showFullImageDialog(context, imagePath),
             child: ClipRRect(
@@ -375,7 +396,7 @@ class _LocationPhotoCarouselState extends State<_LocationPhotoCarousel> {
               child: Image.asset(
                 imagePath,
                 width: double.infinity,
-                height: 250,
+                height: imageHeight,
                 cacheWidth: 900,
                 fit: BoxFit.cover,
                 errorBuilder: (_, __, ___) =>
@@ -422,6 +443,9 @@ class _LocationPhotoCarouselState extends State<_LocationPhotoCarousel> {
           ],
         ),
       ],
+          ),
+        );
+      },
     );
   }
 }
