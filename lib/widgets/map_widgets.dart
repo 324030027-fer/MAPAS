@@ -14,7 +14,16 @@ class MapMarker extends StatelessWidget {
   final bool isSelected;
   final VoidCallback onTap;
 
-  const MapMarker({super.key, required this.location, required this.isSelected, required this.onTap});
+  /// Muestra el nombre bajo el pin. El pin seleccionado siempre lo muestra.
+  final bool showLabel;
+
+  const MapMarker({
+    super.key,
+    required this.location,
+    required this.isSelected,
+    required this.onTap,
+    this.showLabel = true,
+  });
 
   @override
   Widget build(BuildContext context) {
@@ -39,6 +48,7 @@ class MapMarker extends StatelessWidget {
               ),
               child: Icon(location.icon, color: Colors.white, size: 20),
             ),
+            if (showLabel || isSelected)
             Positioned(
               top: size + 6,
               child: ConstrainedBox(
