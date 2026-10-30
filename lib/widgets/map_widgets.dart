@@ -1,8 +1,9 @@
 import 'package:flutter/material.dart';
 import 'package:provider/provider.dart';
+import '../data/tours/tours.dart';
 import '../models/map_location.dart';
+import '../models/tour.dart';
 import '../core/theme/app_colors.dart';
-import '../providers/map_provider.dart';
 import '../providers/schedule_provider.dart';
 import '../screens/panorama_viewer.dart';
 import 'glass.dart';
@@ -223,21 +224,21 @@ class LocationDetailSheet extends StatelessWidget {
                             ),
                           ),
                         ],
-                        if (location.id == 'LT_MAP') ...[
+                        // Botón para el recorrido 360° del edificio, si lo tiene.
+                        if (tourForMapLocation(location.id) != null) ...[
                           const SizedBox(height: 20),
                           SizedBox(
                             width: double.infinity,
                             child: OutlinedButton.icon(
                               onPressed: () {
-                                final provider = context.read<MapProvider>();
-                                final start = provider.getTourLocationById('E1');
+                                final tour = tourForMapLocation(location.id)!;
                                 Navigator.push(
                                   context,
-                                  MaterialPageRoute(builder: (_) => PanoramaViewer(initialLocation: start)),
+                                  MaterialPageRoute(builder: (_) => PanoramaViewer(tour: tour)),
                                 );
                               },
                               icon: const Icon(Icons.vrpano),
-                              label: const Text('INICIAR RECORRIDO 360° DEL LT'),
+                              label: Text('INICIAR RECORRIDO 360° DEL ${tourForMapLocation(location.id)!.shortName}'),
                               style: OutlinedButton.styleFrom(
                                 foregroundColor: AppColors.accent,
                                 side: const BorderSide(color: AppColors.accent),
@@ -344,11 +345,12 @@ class LocationDetailSheet extends StatelessWidget {
               width: double.infinity,
               child: OutlinedButton.icon(
                 onPressed: () {
-                  final tempLoc = MapLocation(
-                    id: 'TEMP_LAB', title: lab.name, description: '', category: 'Laboratorio',
-                    x: 0, y: 0, assetImage360: lab.asset360!,
+                  Navigator.push(
+                    context,
+                    MaterialPageRoute(
+                      builder: (_) => PanoramaViewer(tour: Tour.single(title: lab.name, asset: lab.asset360!)),
+                    ),
                   );
-                  Navigator.push(context, MaterialPageRoute(builder: (_) => PanoramaViewer(initialLocation: tempLoc)));
                 },
                 icon: const Icon(Icons.threesixty, size: 18),
                 label: const Text("VER LABORATORIO EN VISTA 360"),

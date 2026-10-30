@@ -4,16 +4,13 @@ import 'package:shared_preferences/shared_preferences.dart';
 import '../models/map_location.dart';
 class MapProvider extends ChangeNotifier {
   List<MapLocation> _mapPoints = [];
-  List<MapLocation> _tourPoints = [];
   MapLocation? _selectedMapLocation;
 
   List<MapLocation> get mapPoints => _mapPoints;
-  List<MapLocation> get tourPoints => _tourPoints;
   MapLocation? get selectedMapLocation => _selectedMapLocation;
 
   MapProvider() {
     _loadMapPoints();
-    _initTourPoints();
   }
 
   // ==================== PERSISTENCIA ====================
@@ -63,11 +60,6 @@ class MapProvider extends ChangeNotifier {
     notifyListeners();
   }
 
-  // Tour points
-  void _initTourPoints() {
-    _tourPoints = _getDefaultTourPoints();
-  }
-
   /// Info de un laboratorio (encargado, descripción, foto) por ubicación del
   /// mapa y nombre. Null si no existe.
   LabInfo? findLabInfo(String locationId, String labName) {
@@ -80,10 +72,6 @@ class MapProvider extends ChangeNotifier {
       }
     }
     return null;
-  }
-
-  MapLocation getTourLocationById(String id) {
-    return _tourPoints.firstWhere((loc) => loc.id == id, orElse: () => _tourPoints.first);
   }
 
   // ==================== DATOS POR DEFECTO ====================
@@ -184,71 +172,6 @@ class MapProvider extends ChangeNotifier {
           )
         ],
       ),
-    ];
-  }
-
-  // Ubicaciones del recorrido 360° del LT: (id, título, categoría, panorama).
-  static const _tourNodes = <(String, String, String, String)>[
-    ('E1', 'Entrada Trasera', 'Entrada', 'assets/E1.jpg'),
-    ('E2', 'Esquina Derecha', 'Esquina', 'assets/E2.jpg'),
-    ('P1', 'Pasillo 1', 'Pasillo', 'assets/P1.jpg'),
-    ('P3', 'Pasillo Central', 'Pasillo', 'assets/P3.jpg'),
-    ('BH', 'Baños Hombres', 'Baños H', 'assets/S2.jpg'),
-    ('EP', 'Entrada Principal', 'Entrada', 'assets/S1.jpg'),
-    ('BM', 'Baños Mujeres', 'Baños M', 'assets/S3.jpg'),
-    ('P4', 'Pasillo 4', 'Pasillo', 'assets/P4.jpg'),
-    ('P2', 'Pasillo 2', 'Pasillo', 'assets/P2.jpg'),
-    ('E3', 'Esquina Izquierda', 'Esquina', 'assets/E3.jpg'),
-    ('LT', 'LAB TELEMATICA', 'Edificio', 'assets/pano_telematica.jpg'),
-    ('LE', 'LAB ELECTRONICA', 'Edificio', 'assets/pano_electronica.jpg'),
-  ];
-
-  // Tramos del recorrido, declarados una sola vez: (A, rumbo en A hacia B,
-  // B, rumbo en B hacia A). El rumbo (yaw, en grados) es la dirección dentro
-  // de la panorámica de cada extremo; el hotspot de ida y el de vuelta se
-  // generan juntos, así avanzar y retroceder siempre son coherentes.
-  //
-  // Orden (perímetro del edificio, en un solo sentido). Derecha/Izquierda se
-  // ven desde la entrada trasera: el ala izquierda del mapa (E2, P1, P3) baja
-  // hasta BH, pasa por la entrada principal (EP) y sube por el ala derecha
-  // (BM, P4, P2 con acceso a LT) hasta E3:
-  // E1 → E2 → P1 → P3 → BH → EP → BM → P4 → P2 → E3 → E1
-  static const _tourEdges = <(String, double, String, double)>[
-    ('E1', 93, 'E2', -45),
-    ('E2', 45, 'P1', -85),
-    ('P1', 140, 'P3', 180),
-    ('P3', 0, 'BH', -55),
-    ('BH', 37, 'EP', -85),
-    ('EP', 90, 'BM', -45),
-    ('BM', 45, 'P4', -90),
-    ('P4', 90, 'P2', -90),
-    ('P2', 90, 'E3', -45),
-    ('E3', 42, 'E1', -87),
-    // Ramales a laboratorios (siempre al final de los enlaces del pasillo).
-    ('P2', -110, 'LT', -45),
-    // Puerta del laboratorio de Electrónica en Pasillo 4 (≈ -70°); en su
-    // panorama la salida está en ≈ 18°.
-    ('P4', -70, 'LE', 18),
-  ];
-
-  List<MapLocation> _getDefaultTourPoints() {
-    final links = <String, List<HotspotLink>>{};
-    for (final (a, yawA, b, yawB) in _tourEdges) {
-      (links[a] ??= []).add(HotspotLink(targetId: b, yaw: yawA));
-      (links[b] ??= []).add(HotspotLink(targetId: a, yaw: yawB));
-    }
-    return [
-      for (final (id, title, category, asset) in _tourNodes)
-        MapLocation(
-          id: id,
-          title: title,
-          description: '',
-          category: category,
-          x: 0,
-          y: 0,
-          assetImage360: asset,
-          hotspotLinks: links[id] ?? const [],
-        ),
     ];
   }
 }

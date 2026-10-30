@@ -2,9 +2,9 @@ import 'package:flutter/material.dart';
 import 'package:panorama/panorama.dart';
 import 'package:provider/provider.dart';
 import '../core/utils/tour_utils.dart';
-import '../data/tour_labs.dart';
 import '../models/lab_schedule.dart';
 import '../models/map_location.dart';
+import '../models/tour.dart';
 import '../providers/map_provider.dart';
 import '../providers/schedule_provider.dart';
 import '../widgets/lab_tour_widgets.dart';
@@ -17,8 +17,13 @@ import '../widgets/tour_arrow.dart';
 const bool kLabPanelOnWall = true;
 
 class PanoramaViewer extends StatefulWidget {
-  final MapLocation initialLocation;
-  const PanoramaViewer({super.key, required this.initialLocation});
+  /// Recorrido que se muestra (paradas, tramos y laboratorios).
+  final Tour tour;
+
+  /// Parada donde empieza; por defecto la inicial del recorrido.
+  final String? startId;
+
+  const PanoramaViewer({super.key, required this.tour, this.startId});
   
   @override
   State<PanoramaViewer> createState() => _PanoramaViewerState();
@@ -26,6 +31,9 @@ class PanoramaViewer extends StatefulWidget {
 
 class _PanoramaViewerState extends State<PanoramaViewer> {
   late MapLocation currentLocation;
+
+  Tour get _tour => widget.tour;
+  Map<String, TourLabRef> get _labs => _tour.labs;
 
   // El panorama no se monta hasta que su imagen salió de la caché de Flutter
   // (ver _fresh): así siempre se carga de forma asíncrona.
@@ -41,9 +49,9 @@ class _PanoramaViewerState extends State<PanoramaViewer> {
   @override
   void initState() {
     super.initState();
-    currentLocation = widget.initialLocation;
-    _labPanelOpen = kTourLabs.containsKey(currentLocation.id);
-    final firstLab = kTourLabs[currentLocation.id];
+    currentLocation = _tour.stop(widget.startId ?? _tour.startId);
+    _labPanelOpen = _labs.containsKey(currentLocation.id);
+    final firstLab = _labs[currentLocation.id];
     if (firstLab != null) _longitude = firstLab.wallYaw;
     _fresh(currentLocation).then((_) {
       if (mounted) setState(() => _ready = true);
@@ -67,14 +75,13 @@ class _PanoramaViewerState extends State<PanoramaViewer> {
   Future<void> _fresh(MapLocation loc) => AssetImage(loc.assetImage360).evict();
 
   Future<void> _navigateTo(String targetId) async {
-    final provider = Provider.of<MapProvider>(context, listen: false);
     final fromId = currentLocation.id;
-    final target = provider.getTourLocationById(targetId);
+    final target = _tour.stop(targetId);
     await _fresh(target);
     if (!mounted) return;
     final screen = MediaQuery.of(context).size;
     // En un laboratorio se llega mirando a la pared donde va la ventana.
-    final labRef = kTourLabs[target.id];
+    final labRef = _labs[target.id];
     final view = labRef != null
         ? (yaw: labRef.wallYaw, zoom: 1.0)
         : arrivalView(target, fromId, screen.width / screen.height);
@@ -83,31 +90,30 @@ class _PanoramaViewerState extends State<PanoramaViewer> {
       _longitude = view.yaw;
       _zoom = view.zoom;
       // Al entrar a un laboratorio se abre su ventana de información.
-      _labPanelOpen = kTourLabs.containsKey(target.id);
+      _labPanelOpen = _labs.containsKey(target.id);
     });
   }
 
   /// Datos del laboratorio de una ubicación del recorrido (null si no lo es).
   LabInfo? _labInfoFor(String tourId) {
-    final ref = kTourLabs[tourId];
+    final ref = _labs[tourId];
     if (ref == null) return null;
     return Provider.of<MapProvider>(context, listen: false).findLabInfo(ref.locationId, ref.labName);
   }
 
   /// Horarios del laboratorio de una ubicación del recorrido.
   List<LabSchedule> _labSchedulesFor(String tourId, ScheduleProvider schedules) {
-    final ref = kTourLabs[tourId];
+    final ref = _labs[tourId];
     if (ref == null) return const [];
     return schedules.getSchedulesForLocation(ref.locationId).where((s) => s.labName == ref.scheduleName).toList();
   }
 
   @override
   Widget build(BuildContext context) {
-    final provider = Provider.of<MapProvider>(context, listen: false);
     final schedules = context.watch<ScheduleProvider>();
     final labHere = _labInfoFor(currentLocation.id);
     // Panel anclado a la pared del laboratorio.
-    final labRefHere = kTourLabs[currentLocation.id];
+    final labRefHere = _labs[currentLocation.id];
     final wallHotspots = <Hotspot>[
       if (labHere != null && labRefHere != null && kLabPanelOnWall)
         Hotspot(
@@ -160,7 +166,7 @@ class _PanoramaViewerState extends State<PanoramaViewer> {
         animSpeed: 0.0, 
         sensitivity: 2.0,
         hotspots: currentLocation.hotspotLinks.map((link) {
-          final linkedLoc = provider.getTourLocationById(link.targetId);
+          final linkedLoc = _tour.stop(link.targetId);
           // Los laboratorios no llevan flecha: muestran una ventana flotante
           // con resumen y la opción de entrar.
           final labInfo = _labInfoFor(link.targetId);

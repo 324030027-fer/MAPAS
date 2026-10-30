@@ -2,7 +2,8 @@ import 'package:flutter/material.dart';
 import 'package:provider/provider.dart';
 
 import '../core/theme/app_colors.dart';
-import '../models/map_location.dart';
+import '../data/tours/tours.dart';
+import '../models/tour.dart';
 import '../providers/map_provider.dart';
 import '../widgets/empty_state.dart';
 import 'contacts_screen.dart';
@@ -15,8 +16,6 @@ class ToursScreen extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    final mapProvider = context.watch<MapProvider>();
-    final startingPoint = mapProvider.getTourLocationById('E1');
     final isDark = Theme.of(context).brightness == Brightness.dark;
 
     return GlassScaffold(
@@ -56,19 +55,26 @@ class ToursScreen extends StatelessWidget {
                 ),
               ),
             ),
-            SliverToBoxAdapter(
-              child: Padding(
-                padding: const EdgeInsets.all(20),
-                child: _TourCard(
-                  title: 'Recorrido LT',
-                  subtitle: 'Entradas · Pasillos · Laboratorios',
-                  imageAsset: 'assets/E1.jpg',
-                  badge: 'COMPLETO',
-                  onTap: () => Navigator.push(
-                    context,
-                    MaterialPageRoute(builder: (_) => PanoramaViewer(initialLocation: startingPoint)),
-                  ),
-                ),
+            // Una tarjeta por edificio con recorrido.
+            SliverList(
+              delegate: SliverChildBuilderDelegate(
+                (context, i) {
+                  final tour = kTours[i];
+                  return Padding(
+                    padding: EdgeInsets.fromLTRB(20, i == 0 ? 20 : 0, 20, 20),
+                    child: _TourCard(
+                      title: tour.title,
+                      subtitle: tour.subtitle,
+                      imageAsset: tour.coverAsset,
+                      badge: tour.badge,
+                      onTap: () => Navigator.push(
+                        context,
+                        MaterialPageRoute(builder: (_) => PanoramaViewer(tour: tour)),
+                      ),
+                    ),
+                  );
+                },
+                childCount: kTours.length,
               ),
             ),
             SliverToBoxAdapter(
@@ -271,15 +277,7 @@ class _Lab360List extends StatelessWidget {
                 context,
                 MaterialPageRoute(
                   builder: (_) => PanoramaViewer(
-                    initialLocation: MapLocation(
-                      id: 'LAB360_${lab.name.hashCode}',
-                      title: lab.name,
-                      description: '',
-                      category: 'Laboratorio',
-                      x: 0,
-                      y: 0,
-                      assetImage360: lab.asset,
-                    ),
+                    tour: Tour.single(title: lab.name, asset: lab.asset),
                   ),
                 ),
               );
