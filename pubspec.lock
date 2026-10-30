@@ -194,10 +194,9 @@ packages:
   panorama:
     dependency: "direct main"
     description:
-      name: panorama
-      sha256: "9e8b0908c3e4e2a223aff9a7d11670783179aa0ed18a84747b9d92a71aaeeccc"
-      url: "https://pub.dev"
-    source: hosted
+      path: "third_party/panorama"
+      relative: true
+    source: path
     version: "0.4.1"
   path:
     dependency: transitive

@@ -46,6 +46,9 @@ dependencies:
 dependency_overrides:
   motion_sensors:
     path: third_party/motion_sensors
+  # panorama 0.4.1 con el rumbo inicial corregido (grados -> radianes).
+  panorama:
+    path: third_party/panorama
 
 dev_dependencies:
   flutter_test:

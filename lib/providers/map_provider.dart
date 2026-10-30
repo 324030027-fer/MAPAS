@@ -173,30 +173,64 @@ class MapProvider extends ChangeNotifier {
     ];
   }
 
+  // Ubicaciones del recorrido 360° del LT: (id, título, categoría, panorama).
+  static const _tourNodes = <(String, String, String, String)>[
+    ('E1', 'Entrada Trasera', 'Entrada', 'assets/E1.jpg'),
+    ('E2', 'Esquina Derecha', 'Esquina', 'assets/E2.jpg'),
+    ('P1', 'Pasillo 1', 'Pasillo', 'assets/P1.jpg'),
+    ('P3', 'Pasillo Central', 'Pasillo', 'assets/P3.jpg'),
+    ('BH', 'Baños Hombres', 'Baños H', 'assets/S2.jpg'),
+    ('EP', 'Entrada Principal', 'Entrada', 'assets/S1.jpg'),
+    ('BM', 'Baños Mujeres', 'Baños M', 'assets/S3.jpg'),
+    ('P4', 'Pasillo 4', 'Pasillo', 'assets/P4.jpg'),
+    ('P2', 'Pasillo 2', 'Pasillo', 'assets/P2.jpg'),
+    ('E3', 'Esquina Izquierda', 'Esquina', 'assets/E3.jpg'),
+    ('LT', 'LAB TELEMATICA', 'Edificio', 'assets/pano_telematica.jpg'),
+  ];
+
+  // Tramos del recorrido, declarados una sola vez: (A, rumbo en A hacia B,
+  // B, rumbo en B hacia A). El rumbo (yaw, en grados) es la dirección dentro
+  // de la panorámica de cada extremo; el hotspot de ida y el de vuelta se
+  // generan juntos, así avanzar y retroceder siempre son coherentes.
+  //
+  // Orden (perímetro del edificio, en un solo sentido). Derecha/Izquierda se
+  // ven desde la entrada trasera: el ala izquierda del mapa (E2, P1, P3) baja
+  // hasta BH, pasa por la entrada principal (EP) y sube por el ala derecha
+  // (BM, P4, P2 con acceso a LT) hasta E3:
+  // E1 → E2 → P1 → P3 → BH → EP → BM → P4 → P2 → E3 → E1
+  static const _tourEdges = <(String, double, String, double)>[
+    ('E1', 93, 'E2', -45),
+    ('E2', 45, 'P1', -85),
+    ('P1', 140, 'P3', 180),
+    ('P3', 0, 'BH', -55),
+    ('BH', 37, 'EP', -85),
+    ('EP', 90, 'BM', -45),
+    ('BM', 45, 'P4', -90),
+    ('P4', 90, 'P2', -90),
+    ('P2', 90, 'E3', -45),
+    ('E3', 42, 'E1', -87),
+    // Ramal al laboratorio (siempre al final de los enlaces del pasillo).
+    ('P2', -110, 'LT', -45),
+  ];
+
   List<MapLocation> _getDefaultTourPoints() {
+    final links = <String, List<HotspotLink>>{};
+    for (final (a, yawA, b, yawB) in _tourEdges) {
+      (links[a] ??= []).add(HotspotLink(targetId: b, yaw: yawA));
+      (links[b] ??= []).add(HotspotLink(targetId: a, yaw: yawB));
+    }
     return [
-      MapLocation(id: 'E1', title: 'Entrada Trasera', description: '', category: 'Entrada', x: 0, y: 0, assetImage360: 'assets/E1.jpg',
-        hotspotLinks: [HotspotLink(targetId: 'E2', yaw: 93), HotspotLink(targetId: 'E3', yaw: -87)]),
-      MapLocation(id: 'E2', title: 'Esquina Derecha', description: '', category: 'Esquina', x: 0, y: 0, assetImage360: 'assets/E2.jpg',
-        hotspotLinks: [HotspotLink(targetId: 'P1', yaw: 45), HotspotLink(targetId: 'E1', yaw: -45)]),
-      MapLocation(id: 'P1', title: 'Pasillo 1', description: '', category: 'Pasillo', x: 0, y: 0, assetImage360: 'assets/P1.jpg',
-        hotspotLinks: [HotspotLink(targetId: 'P3', yaw: 140), HotspotLink(targetId: 'E2', yaw: -85)]),
-      MapLocation(id: 'P3', title: 'Pasillo Central', description: '', category: 'Pasillo', x: 0, y: 0, assetImage360: 'assets/P3.jpg',
-        hotspotLinks: [HotspotLink(targetId: 'BH', yaw: 0), HotspotLink(targetId: 'P1', yaw: 180)]),
-      MapLocation(id: 'BH', title: 'Baños Hombres', description: '', category: 'Baños H', x: 0, y: 0, assetImage360: 'assets/S2.jpg',
-        hotspotLinks: [HotspotLink(targetId: 'EP', yaw: 37), HotspotLink(targetId: 'P3', yaw: -55)]),
-      MapLocation(id: 'EP', title: 'Entrada Principal', description: '', category: 'Entrada', x: 0, y: 0, assetImage360: 'assets/S1.jpg',
-        hotspotLinks: [HotspotLink(targetId: 'BM', yaw: 90), HotspotLink(targetId: 'BH', yaw: -85)]),
-      MapLocation(id: 'BM', title: 'Baños Mujeres', description: '', category: 'Baños M', x: 0, y: 0, assetImage360: 'assets/S3.jpg',
-        hotspotLinks: [HotspotLink(targetId: 'P2', yaw: 45), HotspotLink(targetId: 'EP', yaw: -45)]),
-      MapLocation(id: 'P4', title: 'Pasillo 4', description: '', category: 'Pasillo', x: 0, y: 0, assetImage360: 'assets/P4.jpg',
-        hotspotLinks: [HotspotLink(targetId: 'P2', yaw: 90), HotspotLink(targetId: 'BM', yaw: -90)]),
-      MapLocation(id: 'P2', title: 'Pasillo 2', description: '', category: 'Pasillo', x: 0, y: 0, assetImage360: 'assets/P2.jpg',
-        hotspotLinks: [HotspotLink(targetId: 'E3', yaw: 90), HotspotLink(targetId: 'P4', yaw: -90), HotspotLink(targetId: 'LT', yaw: -110)]),
-      MapLocation(id: 'E3', title: 'Esquina Izquierda', description: '', category: 'Esquina', x: 0, y: 0, assetImage360: 'assets/E3.jpg',
-        hotspotLinks: [HotspotLink(targetId: 'E1', yaw: 42), HotspotLink(targetId: 'P2', yaw: -45)]),
-      MapLocation(id: 'LT', title: 'LAB TELEMATICA', description: '', category: 'Edificio', x: 0, y: 0, assetImage360: 'assets/pano_telematica.jpg',
-        hotspotLinks: [HotspotLink(targetId: 'P2', yaw: -45)]),
+      for (final (id, title, category, asset) in _tourNodes)
+        MapLocation(
+          id: id,
+          title: title,
+          description: '',
+          category: category,
+          x: 0,
+          y: 0,
+          assetImage360: asset,
+          hotspotLinks: links[id] ?? const [],
+        ),
     ];
   }
 }
