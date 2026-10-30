@@ -1,0 +1,19 @@
+# Texto normalizado a LF en el repositorio; binarios sin tocar.
+* text=auto eol=lf
+
+# Scripts de Windows necesitan CRLF
+*.bat text eol=crlf
+*.cmd text eol=crlf
+
+# Binarios
+*.jpg binary
+*.jpeg binary
+*.png binary
+*.gif binary
+*.webp binary
+*.ico binary
+*.otf binary
+*.ttf binary
+*.jar binary
+*.keystore binary
+*.jks binary

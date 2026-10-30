@@ -34,3 +34,10 @@ ios/.symlinks/
 
 # Android build outputs
 android/build/
+
+# Configuración local de Claude Code (vista previa, etc.)
+.claude/
+
+# Artefactos de compilación sueltos
+*.dill
+*.cache.dill.track.dill
