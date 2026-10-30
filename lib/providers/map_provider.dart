@@ -68,6 +68,20 @@ class MapProvider extends ChangeNotifier {
     _tourPoints = _getDefaultTourPoints();
   }
 
+  /// Info de un laboratorio (encargado, descripción, foto) por ubicación del
+  /// mapa y nombre. Null si no existe.
+  LabInfo? findLabInfo(String locationId, String labName) {
+    for (final loc in _mapPoints) {
+      if (loc.id != locationId) continue;
+      for (final career in loc.careers) {
+        for (final lab in career.labs) {
+          if (lab.name == labName) return lab;
+        }
+      }
+    }
+    return null;
+  }
+
   MapLocation getTourLocationById(String id) {
     return _tourPoints.firstWhere((loc) => loc.id == id, orElse: () => _tourPoints.first);
   }
@@ -186,6 +200,7 @@ class MapProvider extends ChangeNotifier {
     ('P2', 'Pasillo 2', 'Pasillo', 'assets/P2.jpg'),
     ('E3', 'Esquina Izquierda', 'Esquina', 'assets/E3.jpg'),
     ('LT', 'LAB TELEMATICA', 'Edificio', 'assets/pano_telematica.jpg'),
+    ('LE', 'LAB ELECTRONICA', 'Edificio', 'assets/pano_electronica.jpg'),
   ];
 
   // Tramos del recorrido, declarados una sola vez: (A, rumbo en A hacia B,
@@ -209,8 +224,11 @@ class MapProvider extends ChangeNotifier {
     ('P4', 90, 'P2', -90),
     ('P2', 90, 'E3', -45),
     ('E3', 42, 'E1', -87),
-    // Ramal al laboratorio (siempre al final de los enlaces del pasillo).
+    // Ramales a laboratorios (siempre al final de los enlaces del pasillo).
     ('P2', -110, 'LT', -45),
+    // Puerta del laboratorio de Electrónica en Pasillo 4 (≈ -70°); en su
+    // panorama la salida está en ≈ 18°.
+    ('P4', -70, 'LE', 18),
   ];
 
   List<MapLocation> _getDefaultTourPoints() {
