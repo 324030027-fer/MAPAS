@@ -25,7 +25,29 @@ class MapProvider extends ChangeNotifier {
     final List<String>? jsonList = prefs.getStringList('mapPoints');
     if (jsonList != null && jsonList.isNotEmpty) {
       _mapPoints = jsonList.map((jsonStr) => MapLocation.fromJson(jsonDecode(jsonStr))).toList();
+      // Agrega una sola vez los pines por defecto nuevos que el mapa guardado
+      // aún no conoce (sin volver a crear los que el admin borró después).
+      final known = (prefs.getStringList('knownDefaultIds') ?? _mapPoints.map((l) => l.id).toList()).toSet();
+      final ids = _mapPoints.map((l) => l.id).toSet();
+      final defaults = _getDefaultMapPoints();
+      final added = defaults.where((l) => !known.contains(l.id) && !ids.contains(l.id)).toList();
+      if (added.isNotEmpty) {
+        _mapPoints.addAll(added);
+        await _saveMapPoints();
+      }
+      await prefs.setStringList('knownDefaultIds', {...known, ...defaults.map((l) => l.id)}.toList());
+      // v3: se corrigió la posición de algunos pines nuevos (baños de UD1/UD2).
+      if ((prefs.getInt('mapDefaultsVersion') ?? 1) < 3) {
+        const moved = {'BANOS_RECTORIA', 'BANOS_LT', 'BANOS_UD1', 'BANOS_UD2', 'CANCHA_FUTBOL', 'ESTACIONAMIENTO_ALUMNOS'};
+        for (final d in defaults.where((d) => moved.contains(d.id))) {
+          final i = _mapPoints.indexWhere((l) => l.id == d.id);
+          if (i != -1) _mapPoints[i] = _mapPoints[i].copyWith(x: d.x, y: d.y);
+        }
+        await _saveMapPoints();
+        await prefs.setInt('mapDefaultsVersion', 3);
+      }
     } else {
+      await prefs.setStringList('knownDefaultIds', _getDefaultMapPoints().map((l) => l.id).toList());
       _mapPoints = _getDefaultMapPoints();
       await _saveMapPoints();
     }
@@ -171,6 +193,54 @@ class MapProvider extends ChangeNotifier {
             ],
           )
         ],
+      ),
+
+      // ---------- BAÑOS ----------
+      MapLocation(
+        id: 'BANOS_RECTORIA', title: 'BAÑOS RECTORÍA',
+        description: 'Sanitarios en la zona de Rectoría.',
+        category: 'Baños', x: 0.0301, y: 0.3638, assetImage360: '', icon: Icons.wc,
+        features: '• Baños de hombres y mujeres',
+      ),
+      MapLocation(
+        id: 'BANOS_CAFETERIA', title: 'BAÑOS CAFETERÍA',
+        description: 'Sanitarios junto a la cafetería.',
+        category: 'Baños', x: 0.5430, y: 0.3530, assetImage360: '', icon: Icons.wc,
+        features: '• Baños de hombres y mujeres',
+      ),
+      MapLocation(
+        id: 'BANOS_LT', title: 'BAÑOS LT',
+        description: 'Sanitarios en el edificio LT (laboratorios).',
+        category: 'Baños', x: 0.8617, y: 0.3534, assetImage360: '', icon: Icons.wc,
+        features: '• Baños de hombres y mujeres',
+      ),
+      MapLocation(
+        id: 'BANOS_UD1', title: 'BAÑOS UD1',
+        description: 'Sanitarios dentro de la Unidad de Docencia 1.',
+        category: 'Baños', x: 0.7910, y: 0.5590, assetImage360: '', icon: Icons.wc,
+        features: '• 2 baños en planta baja\n• 2 baños en planta alta',
+      ),
+      MapLocation(
+        id: 'BANOS_UD2', title: 'BAÑOS UD2',
+        description: 'Sanitarios dentro de la Unidad de Docencia 2.',
+        category: 'Baños', x: 0.2680, y: 0.8880, assetImage360: '', icon: Icons.wc,
+        features: '• 2 baños en planta baja\n• 2 baños en planta alta',
+      ),
+
+      // ---------- DEPORTES ----------
+      MapLocation(
+        id: 'CANCHA_FUTBOL', title: 'CANCHA DE FUTBOL (PASTO SINTÉTICO)',
+        description: 'Cancha de futbol con pasto sintético.',
+        category: 'Deportes', x: 0.4023, y: 0.5821, assetImage360: '', icon: Icons.sports_soccer,
+        features: '• Pasto sintético\n• Futbol',
+      ),
+
+      // ---------- ESTACIONAMIENTO ----------
+      MapLocation(
+        id: 'ESTACIONAMIENTO_ALUMNOS', title: 'ESTACIONAMIENTO DE ALUMNOS',
+        description: 'Estacionamiento para alumnos, junto al edificio LT.',
+        category: 'Estacionamiento', x: 0.6123, y: 0.1455, assetImage360: '', icon: Icons.local_parking,
+        features: '• Uso exclusivo de alumnos',
       ),
     ];
   }

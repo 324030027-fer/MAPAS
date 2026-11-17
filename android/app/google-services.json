@@ -1,0 +1,46 @@
+{
+  "project_info": {
+    "project_number": "199247408799",
+    "project_id": "nullcoremaps",
+    "storage_bucket": "nullcoremaps.firebasestorage.app"
+  },
+  "client": [
+    {
+      "client_info": {
+        "mobilesdk_app_id": "1:199247408799:android:7758b1fd72dcf67e1bfcaa",
+        "android_client_info": {
+          "package_name": "com.example.nullcore_maps"
+        }
+      },
+      "oauth_client": [
+        {
+          "client_id": "199247408799-59neu4cnaomfl4nbtsiv0rvlg157retr.apps.googleusercontent.com",
+          "client_type": 3
+        }
+      ],
+      "api_key": [
+        {
+          "current_key": "AIzaSyD10O8yp0TEZvJT3Ao0CARwVjZa8DgNBqQ"
+        }
+      ],
+      "services": {
+        "appinvite_service": {
+          "other_platform_oauth_client": [
+            {
+              "client_id": "199247408799-59neu4cnaomfl4nbtsiv0rvlg157retr.apps.googleusercontent.com",
+              "client_type": 3
+            },
+            {
+              "client_id": "199247408799-iff3f45rt3l7blkbip6pef9afip532mc.apps.googleusercontent.com",
+              "client_type": 2,
+              "ios_info": {
+                "bundle_id": "com.example.nullcoreMaps"
+              }
+            }
+          ]
+        }
+      }
+    }
+  ],
+  "configuration_version": "1"
+}

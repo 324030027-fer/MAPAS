@@ -4,6 +4,7 @@ import 'package:provider/provider.dart';
 import '../core/theme/app_colors.dart';
 import '../data/tours/tours.dart';
 import '../models/tour.dart';
+import '../providers/auth_provider.dart';
 import '../providers/map_provider.dart';
 import '../widgets/empty_state.dart';
 import 'contacts_screen.dart';
@@ -17,6 +18,7 @@ class ToursScreen extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     final isDark = Theme.of(context).brightness == Brightness.dark;
+    final canSeePrivate = context.watch<AuthProvider>().canSeePrivate;
 
     return GlassScaffold(
       backgroundColor: isDark ? AppColors.darkBg : AppColors.lightBg,
@@ -92,6 +94,8 @@ class ToursScreen extends StatelessWidget {
               ),
             ),
             SliverToBoxAdapter(child: _Lab360List()),
+            // Profesores: solo comunidad UPJR.
+            if (canSeePrivate) ...[
             SliverToBoxAdapter(
               child: Padding(
                 padding: const EdgeInsets.fromLTRB(20, 24, 20, 8),
@@ -144,6 +148,7 @@ class ToursScreen extends StatelessWidget {
                 childCount: teachers.length,
               ),
             ),
+            ],
             const SliverToBoxAdapter(child: SizedBox(height: 100)),
           ],
         ),

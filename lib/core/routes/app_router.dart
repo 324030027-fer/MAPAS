@@ -7,8 +7,12 @@ import '../../screens/splash_screen.dart';
 import '../../screens/admin/admin_hub_screen.dart';
 import '../../screens/global_schedule_search_screen.dart';
 import '../../screens/contacts_screen.dart';
+import '../../screens/constancias_guide_screen.dart';
 
 class AppRouter {
+  /// Rutas solo para la comunidad UPJR (alumnos y admin).
+  static const _privatePaths = {'/search-schedules', '/contacts', '/constancias'};
+
   static GoRouter create(AuthProvider auth) {
     return GoRouter(
       initialLocation: '/',
@@ -19,6 +23,9 @@ class AppRouter {
         final isLogin = path == '/login';
         if (!auth.isLoggedIn && path != '/login' && path != '/splash') return '/login';
         if (auth.isLoggedIn && isLogin) return '/';
+        // Pantallas internas: los invitados no pueden abrirlas ni por URL.
+        if (path == '/admin' && !auth.isAdmin) return '/';
+        if (_privatePaths.contains(path) && !auth.canSeePrivate) return '/';
         return null;
       },
       routes: [
@@ -28,6 +35,7 @@ class AppRouter {
         GoRoute(path: '/admin', builder: (_, __) => const AdminHubScreen()),
         GoRoute(path: '/search-schedules', builder: (_, __) => const GlobalScheduleSearchScreen()),
         GoRoute(path: '/contacts', builder: (_, __) => const ContactsScreen()),
+        GoRoute(path: '/constancias', builder: (_, __) => const ConstanciasGuideScreen()),
       ],
     );
   }

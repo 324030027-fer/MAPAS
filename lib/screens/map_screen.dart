@@ -6,11 +6,14 @@ import 'package:provider/provider.dart';
 
 import '../core/theme/app_colors.dart';
 import '../core/utils/schedule_utils.dart';
+import '../data/building_outlines.dart';
+import '../data/floor_plans.dart';
 import '../models/map_location.dart';
 import '../providers/auth_provider.dart';
 import '../providers/map_provider.dart';
 import '../providers/schedule_provider.dart';
 import '../widgets/admin_badge.dart';
+import '../widgets/building_outline_painter.dart';
 import '../widgets/glass.dart';
 import '../widgets/grid_painter.dart';
 import '../widgets/map_onboarding_overlay.dart';
@@ -23,7 +26,7 @@ class MapScreen extends StatefulWidget {
   State<MapScreen> createState() => _MapScreenState();
 }
 
-class _MapScreenState extends State<MapScreen> with SingleTickerProviderStateMixin {
+class _MapScreenState extends State<MapScreen> with TickerProviderStateMixin {
   static const double _maxZoom = 5.0;
   // A partir de este zoom se muestran los nombres de todos los pines.
   static const double _labelsZoom = 1.5;
@@ -45,9 +48,27 @@ class _MapScreenState extends State<MapScreen> with SingleTickerProviderStateMix
   String _searchQuery = '';
   String? _categoryFilter;
 
+  // Siluetas de edificios: brillo que parpadea, edificio bajo el mouse y
+  // edificio "abierto" (acercado, mostrando sus puntos interiores).
+  late final AnimationController _pulse =
+      AnimationController(vsync: this, duration: const Duration(milliseconds: 1600))..repeat(reverse: true);
+  String? _hoverBuildingId;
+  String? _focusId;
+  int _floor = 0; // planta mostrada del edificio abierto
+  FloorZone? _zone; // zona tocada en el plano
+
+  bool get _isFiltering =>
+      (_categoryFilter != null && _categoryFilter != 'Todos') || _searchQuery.isNotEmpty;
+
   @override
   void initState() {
     super.initState();
+    // Al alejarse del edificio abierto, se "cierra".
+    _transformer.addListener(() {
+      if (_focusId != null && !_zoomAnim.isAnimating && _transformer.value.getMaxScaleOnAxis() < 1.2) {
+        setState(() => _focusId = null);
+      }
+    });
     _zoomAnim.addListener(() {
       final tween = _zoomTween;
       if (tween != null) _transformer.value = tween.evaluate(_zoomCurve);
@@ -78,7 +99,115 @@ class _MapScreenState extends State<MapScreen> with SingleTickerProviderStateMix
     _animateTo(Matrix4(ns, 0, 0, 0, 0, ns, 0, 0, 0, 0, 1, 0, tx, ty, 0, 1));
   }
 
-  void _resetZoom() => _animateTo(Matrix4.identity());
+  void _resetZoom() {
+    setState(() => _focusId = null);
+    _animateTo(Matrix4.identity());
+  }
+
+  /// Acerca la vista al contorno del edificio y muestra sus puntos interiores.
+  void _focusBuilding(String id) {
+    final outline = kBuildingOutlines[id];
+    final box = _viewerKey.currentContext?.findRenderObject() as RenderBox?;
+    if (outline == null || box == null) return;
+    final w = box.size.width, h = box.size.height;
+    final side = w < h ? w : h;
+    final off = Offset((w - side) / 2, (h - side) / 2);
+    final r = outlineBounds(outline);
+    final rect = Rect.fromLTRB(off.dx + r.left * side, off.dy + r.top * side,
+        off.dx + r.right * side, off.dy + r.bottom * side);
+    // Cabe entre los filtros (arriba) y la barra del edificio (abajo).
+    final sx = w * 0.6 / rect.width, sy = h * 0.38 / rect.height;
+    final ns = (sx < sy ? sx : sy).clamp(1.5, _maxZoom);
+    final tx = (w / 2 - rect.center.dx * ns).clamp(w - w * ns, 0.0);
+    final ty = (h * 0.47 - rect.center.dy * ns).clamp(h - h * ns, 0.0);
+    setState(() {
+      _focusId = id;
+      _hoverBuildingId = null;
+      _floor = 0;
+      _zone = null;
+    });
+    context.read<MapProvider>().selectMapLocation(null);
+    _animateTo(Matrix4(ns, 0, 0, 0, 0, ns, 0, 0, 0, 0, 1, 0, tx, ty, 0, 1));
+  }
+
+  /// Zonas de una planta como indicadores pequeños (mismo estilo que los
+  /// pines) en el centro de cada zona, a tamaño fijo en pantalla.
+  Widget _buildFloorZones(Floor floor, Rect bounds, Size size, double scale) {
+    const d = 30.0; // diámetro del indicador
+    return Stack(
+      clipBehavior: Clip.none,
+      children: floor.zones.map((z) {
+        final selected = identical(z, _zone);
+        final cx = (bounds.left + z.pinPoint.dx * bounds.width) * size.width;
+        final cy = (bounds.top + z.pinPoint.dy * bounds.height) * size.height;
+        final color = selected ? AppColors.highlight : AppColors.primary;
+        return Positioned(
+          left: cx - 60,
+          top: cy - d / 2,
+          width: 120,
+          height: 60,
+          child: Transform.scale(
+            scale: 1 / scale,
+            alignment: const Alignment(0, -0.5), // centro del círculo
+            child: Column(
+              children: [
+                MouseRegion(
+                  cursor: SystemMouseCursors.click,
+                  child: GestureDetector(
+                    onTap: () => setState(() => _zone = selected ? null : z),
+                    child: AnimatedContainer(
+                      duration: const Duration(milliseconds: 160),
+                      width: d,
+                      height: d,
+                      decoration: BoxDecoration(
+                        color: color,
+                        shape: BoxShape.circle,
+                        border: Border.all(color: Colors.white, width: 2),
+                        boxShadow: [BoxShadow(color: color.withValues(alpha: 0.6), blurRadius: 8, spreadRadius: 1)],
+                      ),
+                      child: Icon(z.kind.icon, color: Colors.white, size: 16),
+                    ),
+                  ),
+                ),
+                const SizedBox(height: 3),
+                IgnorePointer(child: _SubtleLabel(z.name)),
+              ],
+            ),
+          ),
+        );
+      }).toList(),
+    );
+  }
+
+  String? _buildingAt(Offset local, Size size, Map<String, List<Offset>> outlines) {
+    final q = Offset(local.dx / size.width, local.dy / size.height);
+    for (final e in outlines.entries) {
+      if (outlineContains(e.value, q)) return e.key;
+    }
+    return null;
+  }
+
+  /// Laboratorios del edificio abierto como puntos flotantes dentro de él.
+  List<MapLocation> _labPoints(MapLocation building) {
+    final outline = kBuildingOutlines[building.id];
+    final labs = building.careers.expand((c) => c.labs).toList();
+    if (outline == null || labs.isEmpty) return [];
+    final r = outlineBounds(outline);
+    return [
+      for (var i = 0; i < labs.length; i++)
+        MapLocation(
+          id: '${building.id}_LAB_$i',
+          title: labs[i].name,
+          description: labs[i].description,
+          category: 'Laboratorio',
+          x: r.left + r.width * (i + 1) / (labs.length + 1),
+          y: r.top + r.height * (i.isEven ? 0.35 : 0.6),
+          assetImage360: '',
+          icon: Icons.science,
+          equipmentImages: [labs[i].imageThumbnail],
+        ),
+    ];
+  }
 
   void _onPinEnter(MapLocation loc) {
     final markerBox = _markerKeys[loc.id]?.currentContext?.findRenderObject() as RenderBox?;
@@ -132,6 +261,7 @@ class _MapScreenState extends State<MapScreen> with SingleTickerProviderStateMix
 
   @override
   void dispose() {
+    _pulse.dispose();
     _zoomAnim.dispose();
     _searchController.dispose();
     _transformer.dispose();
@@ -218,6 +348,94 @@ class _MapScreenState extends State<MapScreen> with SingleTickerProviderStateMix
                               ),
                             ),
                           ),
+                          // Siluetas tocables de los edificios.
+                          Positioned.fill(
+                            child: ValueListenableBuilder<Matrix4>(
+                              valueListenable: _transformer,
+                              builder: (context, matrix, _) {
+                                final size = Size(constraints.maxWidth, constraints.maxHeight);
+                                final outlines = {
+                                  for (final l in visible)
+                                    if (kBuildingOutlines[l.id] != null) l.id: kBuildingOutlines[l.id]!,
+                                };
+                                return MouseRegion(
+                                  cursor: _hoverBuildingId != null ? SystemMouseCursors.click : MouseCursor.defer,
+                                  onHover: (e) {
+                                    final id = _buildingAt(e.localPosition, size, outlines);
+                                    if (id != _hoverBuildingId) setState(() => _hoverBuildingId = id);
+                                  },
+                                  onExit: (_) {
+                                    if (_hoverBuildingId != null) setState(() => _hoverBuildingId = null);
+                                  },
+                                  child: GestureDetector(
+                                    behavior: HitTestBehavior.opaque,
+                                    onTapUp: (d) {
+                                      final id = _buildingAt(d.localPosition, size, outlines);
+                                      if (id != null) {
+                                        _focusBuilding(id);
+                                      } else {
+                                        mapProvider.selectMapLocation(null);
+                                      }
+                                    },
+                                    child: CustomPaint(
+                                      painter: BuildingOutlinePainter(
+                                        outlines: outlines,
+                                        pulse: _pulse,
+                                        color: Colors.white,
+                                        highlightColor: AppColors.accent,
+                                        scale: matrix.getMaxScaleOnAxis().clamp(1.0, _maxZoom),
+                                        hoverId: _hoverBuildingId,
+                                        focusId: _focusId,
+                                        glow: isDark ? 1.0 : 0.4,
+                                      ),
+                                    ),
+                                  ),
+                                );
+                              },
+                            ),
+                          ),
+                          // Nombres discretos de los edificios (vista general).
+                          if (_focusId == null)
+                            Positioned.fill(
+                              child: IgnorePointer(
+                                child: ValueListenableBuilder<Matrix4>(
+                                  valueListenable: _transformer,
+                                  builder: (context, matrix, _) {
+                                    final scale = matrix.getMaxScaleOnAxis().clamp(1.0, _maxZoom);
+                                    return Stack(
+                                      clipBehavior: Clip.none,
+                                      children: [
+                                        for (final l in visible)
+                                          if (kBuildingOutlines[l.id] case final o?)
+                                            Positioned(
+                                              left: outlineBounds(o).center.dx * constraints.maxWidth - 70,
+                                              top: outlineBounds(o).center.dy * constraints.maxHeight - 10,
+                                              width: 140,
+                                              height: 20,
+                                              child: Transform.scale(
+                                                scale: 1 / scale,
+                                                child: Center(child: _SubtleLabel(kShortNames[l.id] ?? l.title)),
+                                              ),
+                                            ),
+                                      ],
+                                    );
+                                  },
+                                ),
+                              ),
+                            ),
+                          // Plano de la planta del edificio abierto.
+                          if (_focusId != null && kFloorPlans.containsKey(_focusId))
+                            Positioned.fill(
+                              child: ValueListenableBuilder<Matrix4>(
+                                valueListenable: _transformer,
+                                builder: (context, matrix, _) => _buildFloorZones(
+                                  kFloorPlans[_focusId]![_floor],
+                                  outlineBounds(kBuildingOutlines[_focusId]!),
+                                  Size(constraints.maxWidth, constraints.maxHeight),
+                                  matrix.getMaxScaleOnAxis().clamp(1.0, _maxZoom),
+                                ),
+                              ),
+                            ),
                           // Pines de tamaño constante en pantalla: al acercar el
                           // mapa se separan en lugar de crecer junto con él.
                           Positioned.fill(
@@ -227,9 +445,25 @@ class _MapScreenState extends State<MapScreen> with SingleTickerProviderStateMix
                                 final scale = matrix.getMaxScaleOnAxis().clamp(1.0, _maxZoom);
                                 final selectedId = mapProvider.selectedMapLocation?.id;
                                 // El seleccionado va al final para quedar encima.
+                                // Los edificios con silueta no llevan pin; los
+                                // puntos interiores solo aparecen al abrir su
+                                // edificio (o al filtrar/buscar).
+                                final focused = _focusId == null
+                                    ? null
+                                    : mapProvider.mapPoints.where((l) => l.id == _focusId).firstOrNull;
+                                final pins = [
+                                  ...visible.where((l) {
+                                    if (kBuildingOutlines.containsKey(l.id)) return false;
+                                    final parent = kInteriorParent[l.id];
+                                    // Con plano de plantas, las zonas ya los muestran.
+                                    final inOpen = parent == _focusId && !kFloorPlans.containsKey(_focusId);
+                                    return parent == null || inOpen || _isFiltering;
+                                  }),
+                                  if (focused != null) ..._labPoints(focused),
+                                ];
                                 final ordered = [
-                                  ...visible.where((l) => l.id != selectedId),
-                                  ...visible.where((l) => l.id == selectedId),
+                                  ...pins.where((l) => l.id != selectedId),
+                                  ...pins.where((l) => l.id == selectedId),
                                 ];
                                 return Stack(
                                   clipBehavior: Clip.none,
@@ -254,7 +488,9 @@ class _MapScreenState extends State<MapScreen> with SingleTickerProviderStateMix
                                               showLabel: scale >= _labelsZoom,
                                               onTap: () {
                                                 setState(() => _hoverId = null);
-                                                mapProvider.selectMapLocation(loc);
+                                                // Un laboratorio abre la ficha de su edificio.
+                                                mapProvider.selectMapLocation(
+                                                    loc.id.contains('_LAB_') && focused != null ? focused : loc);
                                               },
                                             ),
                                           ),
@@ -344,7 +580,8 @@ class _MapScreenState extends State<MapScreen> with SingleTickerProviderStateMix
                           Text(
                             'Mapa interactivo',
                             style: TextStyle(
-                              color: AppColors.accent.withValues(alpha: 0.9),
+                              // En modo claro el cian se pierde: tono más oscuro.
+                              color: isDark ? AppColors.accent.withValues(alpha: 0.9) : const Color(0xFF00838F),
                               fontSize: 12,
                               fontWeight: FontWeight.w600,
                               letterSpacing: 1.5,
@@ -425,7 +662,7 @@ class _MapScreenState extends State<MapScreen> with SingleTickerProviderStateMix
         ),
 
         // Clases ahora en LT
-        if (nowInLt.isNotEmpty && mapProvider.selectedMapLocation == null)
+        if (auth.canSeePrivate && nowInLt.isNotEmpty && mapProvider.selectedMapLocation == null && _focusId == null)
           Positioned(
             left: 16,
             right: 16,
@@ -492,6 +729,102 @@ class _MapScreenState extends State<MapScreen> with SingleTickerProviderStateMix
               onPressed: () => context.push('/admin'),
             ),
           ),
+
+        // Edificio abierto: nombre, botón de información y salir.
+        if (_focusId != null && mapProvider.selectedMapLocation == null)
+          Builder(builder: (context) {
+            final b = mapProvider.mapPoints.where((l) => l.id == _focusId).firstOrNull;
+            if (b == null) return const SizedBox.shrink();
+            return Positioned(
+              left: 16,
+              right: auth.showAdminTools ? 140 : 16,
+              bottom: 100,
+              child: GlassContainer(
+                radius: 20,
+                blur: 12,
+                child: Padding(
+                  padding: const EdgeInsets.fromLTRB(16, 8, 6, 8),
+                  child: Column(
+                    mainAxisSize: MainAxisSize.min,
+                    children: [
+                  if (kFloorPlans[b.id] case final floors?) ...[
+                    Row(
+                      children: [
+                        for (var i = 0; i < floors.length; i++)
+                          Padding(
+                            padding: const EdgeInsets.only(right: 6),
+                            child: ChoiceChip(
+                              label: Text(floors[i].label),
+                              tooltip: floors[i].name,
+                              selected: i == _floor,
+                              selectedColor: AppColors.accent.withValues(alpha: 0.35),
+                              onSelected: (_) => setState(() {
+                                _floor = i;
+                                _zone = null;
+                              }),
+                            ),
+                          ),
+                        const SizedBox(width: 4),
+                        Expanded(
+                          child: Text(
+                            _zone == null
+                                ? '${floors[_floor].name} · toca una zona'
+                                : '${_zone!.name}${_zone!.detail != null ? ' — ${_zone!.detail}' : ''}',
+                            maxLines: 2,
+                            overflow: TextOverflow.ellipsis,
+                            style: TextStyle(
+                              fontSize: 12,
+                              color: _zone == null
+                                  ? (isDark ? Colors.white60 : Colors.black54)
+                                  : (isDark ? Colors.white : AppColors.textPrimaryLight),
+                            ),
+                          ),
+                        ),
+                      ],
+                    ),
+                    if (_zone?.guide case (final label, final route) when auth.canSeePrivate)
+                      Align(
+                        alignment: Alignment.centerLeft,
+                        child: TextButton.icon(
+                          onPressed: () => context.push(route),
+                          icon: const Icon(Icons.description_outlined, size: 18),
+                          label: Text(label),
+                          style: TextButton.styleFrom(foregroundColor: AppColors.highlight),
+                        ),
+                      ),
+                    const SizedBox(height: 4),
+                  ],
+                  Row(
+                    children: [
+                      Icon(b.icon, color: AppColors.accent),
+                      const SizedBox(width: 10),
+                      Expanded(
+                        child: Text(b.title,
+                            maxLines: 1,
+                            overflow: TextOverflow.ellipsis,
+                            style: TextStyle(
+                              color: isDark ? Colors.white : AppColors.textPrimaryLight,
+                              fontWeight: FontWeight.bold,
+                            )),
+                      ),
+                      TextButton(
+                        onPressed: () => mapProvider.selectMapLocation(b),
+                        child: const Text('Ver información'),
+                      ),
+                      IconButton(
+                        tooltip: 'Salir del edificio',
+                        icon: const Icon(Icons.close_rounded),
+                        color: isDark ? Colors.white70 : Colors.black54,
+                        onPressed: _resetZoom,
+                      ),
+                    ],
+                  ),
+                    ],
+                  ),
+                ),
+              ),
+            );
+          }),
 
         if (hoverCard != null) hoverCard,
 
@@ -615,6 +948,34 @@ class _PinPreviewCard extends StatelessWidget {
             ),
           ),
         ],
+      ),
+    );
+  }
+}
+
+/// Etiqueta pequeña y semitransparente: da contexto sin tapar el mapa.
+class _SubtleLabel extends StatelessWidget {
+  const _SubtleLabel(this.text);
+  final String text;
+
+  @override
+  Widget build(BuildContext context) {
+    return Container(
+      padding: const EdgeInsets.symmetric(horizontal: 6, vertical: 2),
+      decoration: BoxDecoration(
+        color: Colors.black.withValues(alpha: 0.38),
+        borderRadius: BorderRadius.circular(6),
+      ),
+      child: Text(
+        text,
+        maxLines: 1,
+        overflow: TextOverflow.ellipsis,
+        style: TextStyle(
+          color: Colors.white.withValues(alpha: 0.92),
+          fontSize: 10,
+          fontWeight: FontWeight.w600,
+          letterSpacing: 0.2,
+        ),
       ),
     );
   }

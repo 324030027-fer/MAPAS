@@ -26,6 +26,18 @@ class MoreScreen extends StatelessWidget {
             _Header(auth: auth, isDark: isDark),
             const SizedBox(height: 20),
             _SectionTitle('Campus', isDark: isDark),
+            if (!auth.canSeePrivate)
+              _Tile(
+                icon: Icons.lock_outline,
+                title: 'Más información para la comunidad UPJR',
+                subtitle: 'Profesores, horarios y trámites: inicia sesión con tu cuenta @upjr.edu.mx',
+                onTap: () async {
+                  await auth.logout();
+                  if (context.mounted) context.go('/login');
+                },
+                isDark: isDark,
+              ),
+            if (auth.canSeePrivate) ...[
             _Tile(
               icon: Icons.search,
               title: 'Buscar horarios',
@@ -40,6 +52,16 @@ class MoreScreen extends StatelessWidget {
               onTap: () => context.push('/contacts'),
               isDark: isDark,
             ),
+            const SizedBox(height: 16),
+            _SectionTitle('Trámites', isDark: isDark),
+            _Tile(
+              icon: Icons.description_outlined,
+              title: 'Solicitar constancia',
+              subtitle: 'Guía paso a paso, referencia de pago y correo',
+              onTap: () => context.push('/constancias'),
+              isDark: isDark,
+            ),
+            ],
             const SizedBox(height: 16),
             _SectionTitle('Preferencias', isDark: isDark),
             GlassCard(

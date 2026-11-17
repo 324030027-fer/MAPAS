@@ -1,0 +1,49 @@
+rules_version = '2';
+
+// Reglas de NullCoreMaps.
+// - Invitados (sin cuenta): no leen nada de Firestore; lo público va en la app.
+// - Comunidad UPJR (Google @upjr.edu.mx verificado): lee la información interna.
+// - Admins (documento admins/{correo}): además la modifica.
+service cloud.firestore {
+  match /databases/{database}/documents {
+
+    function isUpjr() {
+      return request.auth != null
+        && request.auth.token.email_verified == true
+        && request.auth.token.email.lower().matches('.*@upjr[.]edu[.]mx$');
+    }
+
+    function isAdmin() {
+      return isUpjr()
+        && exists(/databases/$(database)/documents/admins/$(request.auth.token.email.lower()));
+    }
+
+    // Lista de administradores: cada quien solo puede ver si él mismo es admin.
+    // Se edita únicamente desde la consola de Firebase.
+    match /admins/{email} {
+      allow read: if isUpjr() && request.auth.token.email.lower() == email;
+      allow write: if false;
+    }
+
+    // Información interna (profesores, horarios, etc.).
+    match /teachers/{doc=**} {
+      allow read: if isUpjr();
+      allow write: if isAdmin();
+    }
+    match /schedules/{doc=**} {
+      allow read: if isUpjr();
+      allow write: if isAdmin();
+    }
+
+    // Contenido del mapa editable por admins (lectura pública).
+    match /map/{doc=**} {
+      allow read: if true;
+      allow write: if isAdmin();
+    }
+
+    // Todo lo demás, cerrado.
+    match /{document=**} {
+      allow read, write: if false;
+    }
+  }
+}

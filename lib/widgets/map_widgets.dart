@@ -4,6 +4,7 @@ import '../data/tours/tours.dart';
 import '../models/map_location.dart';
 import '../models/tour.dart';
 import '../core/theme/app_colors.dart';
+import '../providers/auth_provider.dart';
 import '../providers/schedule_provider.dart';
 import '../screens/panorama_viewer.dart';
 import 'glass.dart';
@@ -86,7 +87,9 @@ class LocationDetailSheet extends StatelessWidget {
     final scheduleProvider = context.watch<ScheduleProvider>();
     final schedules = scheduleProvider.getSchedulesForLocation(location.id);
     final bool hasLaboratories = location.careers.isNotEmpty;
-    final bool hasSchedules = schedules.isNotEmpty;
+    // Horarios y encargados son información interna (no para invitados).
+    final bool canSeePrivate = context.watch<AuthProvider>().canSeePrivate;
+    final bool hasSchedules = canSeePrivate && schedules.isNotEmpty;
 
     // Espacio para la barra de navegación flotante (66 de alto + 14 de margen
     // + área segura inferior): el contenido llega a verse completo al final.
@@ -330,8 +333,10 @@ class LocationDetailSheet extends StatelessWidget {
                   children: [
                     Text(lab.name, style: const TextStyle(color: Colors.white, fontWeight: FontWeight.bold)),
                     const SizedBox(height: 4),
-                    Text("Encargado: ${lab.inCharge}", style: TextStyle(color: Colors.white.withOpacity(0.6), fontSize: 11)),
-                    Text(lab.contact, style: const TextStyle(color: Color(0xFFFF8C00), fontSize: 11)),
+                    if (context.watch<AuthProvider>().canSeePrivate) ...[
+                      Text("Encargado: ${lab.inCharge}", style: TextStyle(color: Colors.white.withOpacity(0.6), fontSize: 11)),
+                      Text(lab.contact, style: const TextStyle(color: Color(0xFFFF8C00), fontSize: 11)),
+                    ],
                   ],
                 ),
               ),

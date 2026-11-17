@@ -14,10 +14,29 @@ class LoginScreen extends StatefulWidget {
 
 class _LoginScreenState extends State<LoginScreen> {
   final TextEditingController _nameController = TextEditingController();
-  final TextEditingController _adminUserController = TextEditingController();
-  final TextEditingController _adminPassController = TextEditingController();
+  bool _signingIn = false;
 
-  bool _isAdminMode = false; // controls ExpansionTile visual state
+  @override
+  void dispose() {
+    _nameController.dispose();
+    super.dispose();
+  }
+
+  Future<void> _signInUpjr(AuthProvider auth) async {
+    setState(() => _signingIn = true);
+    try {
+      await auth.signInWithGoogle();
+      if (mounted) context.go('/');
+    } on AuthFailure catch (e) {
+      if (mounted) {
+        ScaffoldMessenger.of(context).showSnackBar(
+          SnackBar(content: Text(e.message), backgroundColor: AppColors.danger),
+        );
+      }
+    } finally {
+      if (mounted) setState(() => _signingIn = false);
+    }
+  }
 
   @override
   Widget build(BuildContext context) {
@@ -108,6 +127,70 @@ class _LoginScreenState extends State<LoginScreen> {
                 ),
                 const SizedBox(height: 48),
 
+                // ========== COMUNIDAD UPJR (cuenta institucional) ==========
+                GlassCard(
+                  radius: 28,
+                  margin: EdgeInsets.zero,
+                  child: Padding(
+                    padding: const EdgeInsets.all(20),
+                    child: Column(
+                      crossAxisAlignment: CrossAxisAlignment.start,
+                      children: [
+                        const Row(
+                          children: [
+                            Icon(Icons.school_outlined, color: Color(0xFFFF8C00)),
+                            SizedBox(width: 12),
+                            Text(
+                              'COMUNIDAD UPJR',
+                              style: TextStyle(
+                                color: Color(0xFFFF8C00),
+                                fontWeight: FontWeight.bold,
+                                letterSpacing: 1.2,
+                                fontSize: 14,
+                              ),
+                            ),
+                          ],
+                        ),
+                        const SizedBox(height: 8),
+                        const Text(
+                          'Alumnos y personal: entra con tu correo @upjr.edu.mx para ver profesores, horarios y trámites.',
+                          style: TextStyle(color: Colors.white70, fontSize: 12.5, height: 1.4),
+                        ),
+                        const SizedBox(height: 16),
+                        SizedBox(
+                          width: double.infinity,
+                          child: FilledButton.icon(
+                            onPressed: _signingIn ? null : () => _signInUpjr(auth),
+                            icon: _signingIn
+                                ? const SizedBox(
+                                    width: 18,
+                                    height: 18,
+                                    child: CircularProgressIndicator(strokeWidth: 2, color: Colors.black54),
+                                  )
+                                : const Icon(Icons.login),
+                            label: const Text('INICIAR SESIÓN CON GOOGLE (UPJR)'),
+                            style: FilledButton.styleFrom(
+                              backgroundColor: Colors.white,
+                              foregroundColor: const Color(0xFF1E1E2C),
+                              padding: const EdgeInsets.symmetric(vertical: 14),
+                              shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(30)),
+                            ),
+                          ),
+                        ),
+                        if (!auth.supportsGoogleSignIn) ...[
+                          const SizedBox(height: 8),
+                          const Text(
+                            'En la app de escritorio aún no está disponible; usa la versión web o la del celular.',
+                            style: TextStyle(color: Colors.white54, fontSize: 11.5),
+                          ),
+                        ],
+                      ],
+                    ),
+                  ),
+                ),
+
+                const SizedBox(height: 24),
+
                 // ========== SECCIÓN INVITADO (nombre obligatorio) ==========
                 GlassCard(
                   radius: 28,
@@ -122,7 +205,7 @@ class _LoginScreenState extends State<LoginScreen> {
                                 color: Color(0xFF00E5FF)),
                             const SizedBox(width: 12),
                             const Text(
-                              'ACCESO INVITADO',
+                              'ASPIRANTES Y VISITANTES',
                               style: TextStyle(
                                 color: Color(0xFF00E5FF),
                                 fontWeight: FontWeight.bold,
@@ -183,109 +266,6 @@ class _LoginScreenState extends State<LoginScreen> {
                   ),
                 ),
 
-                const SizedBox(height: 24),
-
-                // ========== SECCIÓN ADMINISTRADOR (naranja) ==========
-                GlassCard(
-                  radius: 28,
-                  margin: EdgeInsets.zero,
-                  child: Theme(
-                    data: Theme.of(context).copyWith(dividerColor: Colors.transparent),
-                    child: ExpansionTile(
-                      onExpansionChanged: (expanded) {
-                        setState(() {
-                          _isAdminMode = expanded;
-                        });
-                      },
-                      leading: const Icon(Icons.admin_panel_settings,
-                          color: Color(0xFFFF6B00)),
-                      title: const Text(
-                        'ACCESO ADMINISTRADOR',
-                        style: TextStyle(
-                          color: Color(0xFFFF6B00),
-                          fontWeight: FontWeight.bold,
-                          letterSpacing: 1.2,
-                          fontSize: 14,
-                        ),
-                      ),
-                      children: [
-                        Padding(
-                          padding: const EdgeInsets.fromLTRB(20, 0, 20, 24),
-                          child: Column(
-                            children: [
-                              TextField(
-                                controller: _adminUserController,
-                                style: const TextStyle(color: Colors.white),
-                                decoration: InputDecoration(
-                                  labelText: 'Usuario',
-                                  labelStyle: const TextStyle(color: Colors.white70),
-                                  enabledBorder: OutlineInputBorder(
-                                    borderSide: const BorderSide(color: Colors.white24),
-                                    borderRadius: BorderRadius.circular(16),
-                                  ),
-                                  focusedBorder: OutlineInputBorder(
-                                    borderSide: const BorderSide(color: Color(0xFFFF6B00)),
-                                    borderRadius: BorderRadius.circular(16),
-                                  ),
-                                ),
-                              ),
-                              const SizedBox(height: 16),
-                              TextField(
-                                controller: _adminPassController,
-                                obscureText: true,
-                                style: const TextStyle(color: Colors.white),
-                                decoration: InputDecoration(
-                                  labelText: 'Contraseña',
-                                  labelStyle: const TextStyle(color: Colors.white70),
-                                  enabledBorder: OutlineInputBorder(
-                                    borderSide: const BorderSide(color: Colors.white24),
-                                    borderRadius: BorderRadius.circular(16),
-                                  ),
-                                  focusedBorder: OutlineInputBorder(
-                                    borderSide: const BorderSide(color: Color(0xFFFF6B00)),
-                                    borderRadius: BorderRadius.circular(16),
-                                  ),
-                                ),
-                              ),
-                              const SizedBox(height: 24),
-                              SizedBox(
-                                width: double.infinity,
-                                child: OutlinedButton.icon(
-                                  onPressed: () async {
-                                    final success = await auth.loginAdmin(
-                                      _adminUserController.text.trim(),
-                                      _adminPassController.text.trim(),
-                                    );
-                                    if (success && context.mounted) {
-                                      context.go('/');
-                                    } else if (context.mounted) {
-                                      ScaffoldMessenger.of(context).showSnackBar(
-                                        const SnackBar(
-                                          content: Text('Credenciales incorrectas'),
-                                          backgroundColor: Color(0xFFFF6B00),
-                                        ),
-                                      );
-                                    }
-                                  },
-                                  icon: const Icon(Icons.admin_panel_settings),
-                                  label: const Text('INGRESAR COMO ADMIN'),
-                                  style: OutlinedButton.styleFrom(
-                                    foregroundColor: const Color(0xFFFF6B00),
-                                    side: const BorderSide(color: Color(0xFFFF6B00)),
-                                    padding: const EdgeInsets.symmetric(vertical: 14),
-                                    shape: RoundedRectangleBorder(
-                                      borderRadius: BorderRadius.circular(30),
-                                    ),
-                                  ),
-                                ),
-                              ),
-                            ],
-                          ),
-                        ),
-                      ],
-                    ),
-                  ),
-                ),
               ],
             ),
           ),
