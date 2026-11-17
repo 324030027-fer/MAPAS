@@ -9,6 +9,7 @@ import '../../providers/schedule_provider.dart';
 import 'admin_hub_screen.dart';
 import 'location_editor.dart';
 import '../../widgets/glass.dart';
+import '../../widgets/responsive.dart';
 
 class AdminDashboard extends StatelessWidget {
   final bool embedded;
@@ -31,7 +32,7 @@ class AdminDashboard extends StatelessWidget {
             child: Text('No hay puntos en el mapa.', style: TextStyle(color: Colors.white)),
           )
         : ListView.builder(
-            padding: const EdgeInsets.all(16),
+            padding: centeredListPadding(context, horizontal: 16, bottom: 16),
             itemCount: provider.mapPoints.length,
             itemBuilder: (context, index) {
               final loc = provider.mapPoints[index];

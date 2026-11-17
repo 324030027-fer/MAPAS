@@ -9,6 +9,7 @@ import '../providers/schedule_provider.dart';
 import '../widgets/empty_state.dart';
 import '../models/lab_schedule.dart';
 import '../widgets/glass.dart';
+import '../widgets/responsive.dart';
 
 class GlobalScheduleSearchScreen extends StatefulWidget {
   const GlobalScheduleSearchScreen({super.key});
@@ -40,7 +41,7 @@ class _GlobalScheduleSearchScreenState extends State<GlobalScheduleSearchScreen>
       appBar: AppBar(
         title: const Text('Buscar horarios'),
       ),
-      body: Column(
+      body: ResponsiveCenter(child: Column(
         children: [
           Padding(
             padding: const EdgeInsets.all(16),
@@ -150,7 +151,7 @@ class _GlobalScheduleSearchScreenState extends State<GlobalScheduleSearchScreen>
                   ),
           ),
         ],
-      ),
+      )),
     );
   }
 

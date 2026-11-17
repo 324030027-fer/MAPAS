@@ -75,11 +75,16 @@ class LocationDetailSheet extends StatelessWidget {
   final ScrollController? scrollController;
   final VoidCallback? onClose;
 
+  /// Espacio inferior para la barra de navegación flotante. Por defecto se
+  /// calcula (hoja inferior); el panel lateral de PC pasa 0.
+  final double? navInset;
+
   const LocationDetailSheet({
     super.key,
     required this.location,
     this.scrollController,
     this.onClose,
+    this.navInset,
   });
 
   @override
@@ -93,7 +98,7 @@ class LocationDetailSheet extends StatelessWidget {
 
     // Espacio para la barra de navegación flotante (66 de alto + 14 de margen
     // + área segura inferior): el contenido llega a verse completo al final.
-    final double navInset = 92 + MediaQuery.of(context).padding.bottom;
+    final double navInset = this.navInset ?? 92 + MediaQuery.of(context).padding.bottom;
 
     List<String> tabTitles = ['DESCRIPCIÓN', 'FOTOS'];
     if (hasLaboratories) tabTitles.add('LABORATORIOS');

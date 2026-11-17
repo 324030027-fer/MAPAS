@@ -18,6 +18,7 @@ import '../widgets/glass.dart';
 import '../widgets/grid_painter.dart';
 import '../widgets/map_onboarding_overlay.dart';
 import '../widgets/map_widgets.dart';
+import '../widgets/responsive.dart';
 
 class MapScreen extends StatefulWidget {
   const MapScreen({super.key});
@@ -45,6 +46,7 @@ class _MapScreenState extends State<MapScreen> with TickerProviderStateMixin {
   Offset _hoverTop = Offset.zero; // parte alta del pin (coords. del Stack)
   Offset _hoverBottom = Offset.zero; // parte baja del icono
   final TextEditingController _searchController = TextEditingController();
+  final ScrollController _sidePanelScroll = ScrollController();
   String _searchQuery = '';
   String? _categoryFilter;
 
@@ -179,6 +181,69 @@ class _MapScreenState extends State<MapScreen> with TickerProviderStateMixin {
     );
   }
 
+  /// Lista de lugares visibles (barra lateral de PC). Un edificio con
+  /// silueta se abre; los demás muestran su ficha.
+  Widget _buildPlacesList(MapProvider provider, List<MapLocation> visible, bool isDark) {
+    final places = visible.where((l) => !kInteriorParent.containsKey(l.id) || _isFiltering).toList()
+      ..sort((a, b) => (kShortNames[a.id] ?? a.title).compareTo(kShortNames[b.id] ?? b.title));
+    if (places.isEmpty) {
+      return Text('Sin resultados', style: TextStyle(color: isDark ? Colors.white54 : Colors.black45));
+    }
+    return ListView.separated(
+      padding: const EdgeInsets.only(bottom: 12),
+      itemCount: places.length,
+      separatorBuilder: (_, __) => const SizedBox(height: 4),
+      itemBuilder: (context, i) {
+        final l = places[i];
+        final active = l.id == _focusId || l.id == provider.selectedMapLocation?.id;
+        return Material(
+          color: active ? AppColors.primary.withValues(alpha: 0.22) : Colors.transparent,
+          borderRadius: BorderRadius.circular(12),
+          child: InkWell(
+            borderRadius: BorderRadius.circular(12),
+            onTap: () {
+              if (kBuildingOutlines.containsKey(l.id)) {
+                _focusBuilding(l.id);
+              } else {
+                provider.selectMapLocation(l);
+              }
+            },
+            child: Padding(
+              padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 9),
+              child: Row(
+                children: [
+                  Icon(l.icon, size: 20, color: active ? AppColors.accent : (isDark ? Colors.white70 : AppColors.textSecondaryLight)),
+                  const SizedBox(width: 12),
+                  Expanded(
+                    child: Column(
+                      crossAxisAlignment: CrossAxisAlignment.start,
+                      children: [
+                        Text(
+                          kShortNames[l.id] ?? l.title,
+                          maxLines: 1,
+                          overflow: TextOverflow.ellipsis,
+                          style: TextStyle(
+                            color: isDark ? Colors.white : AppColors.textPrimaryLight,
+                            fontWeight: FontWeight.w600,
+                            fontSize: 13.5,
+                          ),
+                        ),
+                        Text(
+                          l.category,
+                          style: TextStyle(color: isDark ? Colors.white54 : AppColors.textSecondaryLight, fontSize: 11.5),
+                        ),
+                      ],
+                    ),
+                  ),
+                ],
+              ),
+            ),
+          ),
+        );
+      },
+    );
+  }
+
   String? _buildingAt(Offset local, Size size, Map<String, List<Offset>> outlines) {
     final q = Offset(local.dx / size.width, local.dy / size.height);
     for (final e in outlines.entries) {
@@ -264,6 +329,7 @@ class _MapScreenState extends State<MapScreen> with TickerProviderStateMixin {
     _pulse.dispose();
     _zoomAnim.dispose();
     _searchController.dispose();
+    _sidePanelScroll.dispose();
     _transformer.dispose();
     super.dispose();
   }
@@ -299,6 +365,20 @@ class _MapScreenState extends State<MapScreen> with TickerProviderStateMixin {
 
     final hoverCard = _buildHoverCard(mapProvider, context);
 
+    // En pantallas anchas: cabecera compacta a la izquierda, barras inferiores
+    // centradas con ancho fijo y la ficha del lugar como panel lateral.
+    final screenW = MediaQuery.sizeOf(context).width;
+    final wide = screenW >= Breakpoints.tablet;
+    final sidePanel = wide && mapProvider.selectedMapLocation != null;
+    const panelW = 420.0;
+    const barMaxW = 560.0;
+    const sidebarW = 340.0;
+    final mapLeft = wide ? sidebarW : 0.0; // el mapa ocupa lo que deja la barra
+    final mapAreaW = screenW - mapLeft - (sidePanel ? panelW + 16 : 0);
+    final barSide = mapAreaW > barMaxW + 32 ? (mapAreaW - barMaxW) / 2 : 16.0;
+    final barLeft = mapLeft + barSide;
+    final barRight = screenW - mapLeft - mapAreaW + barSide;
+
     return Stack(
       key: _stackKey,
       fit: StackFit.expand,
@@ -315,7 +395,11 @@ class _MapScreenState extends State<MapScreen> with TickerProviderStateMixin {
             ),
           ),
         ),
-        Positioned.fill(
+        Positioned(
+          left: mapLeft,
+          top: 0,
+          right: 0,
+          bottom: 0,
           child: GestureDetector(
             onTap: () => mapProvider.selectMapLocation(null),
             // Mapa fijo: no se puede alejar ni sacar de los bordes; el zoom
@@ -514,7 +598,7 @@ class _MapScreenState extends State<MapScreen> with TickerProviderStateMixin {
 
         // Controles de zoom
         Positioned(
-          right: 12,
+          right: sidePanel ? panelW + 28 : 12,
           top: 0,
           bottom: 0,
           child: Center(
@@ -537,21 +621,28 @@ class _MapScreenState extends State<MapScreen> with TickerProviderStateMixin {
         Positioned(
           top: 0,
           left: 0,
-          right: 0,
+          right: wide ? null : 0,
+          bottom: wide ? 0 : null,
+          width: wide ? sidebarW : null,
           child: Container(
             padding: EdgeInsets.only(
-              top: MediaQuery.of(context).padding.top + 8,
+              top: MediaQuery.of(context).padding.top + (wide ? 20 : 8),
               bottom: 12,
-              left: 16,
-              right: 16,
+              left: wide ? 20 : 16,
+              right: wide ? 20 : 16,
             ),
-            decoration: BoxDecoration(
-              gradient: LinearGradient(
-                begin: Alignment.topCenter,
-                end: Alignment.bottomCenter,
-                colors: [bg.withValues(alpha: 0.55), bg.withValues(alpha: 0)],
-              ),
-            ),
+            decoration: wide
+                ? BoxDecoration(
+                    color: bg.withValues(alpha: 0.86),
+                    border: Border(right: BorderSide(color: (isDark ? Colors.white : Colors.black).withValues(alpha: 0.08))),
+                  )
+                : BoxDecoration(
+                    gradient: LinearGradient(
+                      begin: Alignment.topCenter,
+                      end: Alignment.bottomCenter,
+                      colors: [bg.withValues(alpha: 0.55), bg.withValues(alpha: 0)],
+                    ),
+                  ),
             child: Column(
               crossAxisAlignment: CrossAxisAlignment.start,
               children: [
@@ -623,14 +714,12 @@ class _MapScreenState extends State<MapScreen> with TickerProviderStateMixin {
                   ),
                 ),
                 const SizedBox(height: 10),
-                SizedBox(
-                  height: 36,
-                  child: ListView(
-                    scrollDirection: Axis.horizontal,
-                    children: _categories(mapProvider).map((cat) {
+                _CategoryChips(
+                  wrap: wide,
+                  children: _categories(mapProvider).map((cat) {
                       final selected = (_categoryFilter ?? 'Todos') == cat;
                       return Padding(
-                        padding: const EdgeInsets.only(right: 8),
+                        padding: EdgeInsets.only(right: wide ? 0 : 8),
                         child: GestureDetector(
                           onTap: () => setState(() => _categoryFilter = cat == 'Todos' ? null : cat),
                           child: GlassContainer(
@@ -654,8 +743,22 @@ class _MapScreenState extends State<MapScreen> with TickerProviderStateMixin {
                         ),
                       );
                     }).toList(),
-                  ),
                 ),
+                // PC: lista de lugares bajo los filtros.
+                if (wide) ...[
+                  const SizedBox(height: 18),
+                  Text(
+                    'LUGARES',
+                    style: TextStyle(
+                      color: isDark ? Colors.white54 : AppColors.textSecondaryLight,
+                      fontSize: 11,
+                      fontWeight: FontWeight.w800,
+                      letterSpacing: 1.4,
+                    ),
+                  ),
+                  const SizedBox(height: 6),
+                  Expanded(child: _buildPlacesList(mapProvider, visible, isDark)),
+                ],
               ],
             ),
           ),
@@ -664,8 +767,8 @@ class _MapScreenState extends State<MapScreen> with TickerProviderStateMixin {
         // Clases ahora en LT
         if (auth.canSeePrivate && nowInLt.isNotEmpty && mapProvider.selectedMapLocation == null && _focusId == null)
           Positioned(
-            left: 16,
-            right: 16,
+            left: barLeft,
+            right: barRight,
             bottom: 100,
             child: GlassContainer(
               radius: 20,
@@ -736,8 +839,8 @@ class _MapScreenState extends State<MapScreen> with TickerProviderStateMixin {
             final b = mapProvider.mapPoints.where((l) => l.id == _focusId).firstOrNull;
             if (b == null) return const SizedBox.shrink();
             return Positioned(
-              left: 16,
-              right: auth.showAdminTools ? 140 : 16,
+              left: barLeft,
+              right: !wide && auth.showAdminTools ? 140 : barRight,
               bottom: 100,
               child: GlassContainer(
                 radius: 20,
@@ -828,7 +931,23 @@ class _MapScreenState extends State<MapScreen> with TickerProviderStateMixin {
 
         if (hoverCard != null) hoverCard,
 
-        if (mapProvider.selectedMapLocation != null)
+        if (sidePanel)
+          Positioned(
+            top: MediaQuery.paddingOf(context).top + 16,
+            right: 16,
+            bottom: 16,
+            width: panelW,
+            child: ClipRRect(
+              borderRadius: BorderRadius.circular(28),
+              child: LocationDetailSheet(
+                location: mapProvider.selectedMapLocation!,
+                scrollController: _sidePanelScroll,
+                onClose: () => mapProvider.selectMapLocation(null),
+                navInset: 0,
+              ),
+            ),
+          )
+        else if (mapProvider.selectedMapLocation != null)
           DraggableScrollableSheet(
             initialChildSize: 0.5,
             minChildSize: 0.22,
@@ -977,6 +1096,29 @@ class _SubtleLabel extends StatelessWidget {
           letterSpacing: 0.2,
         ),
       ),
+    );
+  }
+}
+
+/// Filtros de categoría: fila deslizable (teléfono) o chips que se acomodan
+/// en varias líneas (PC, barra lateral).
+class _CategoryChips extends StatelessWidget {
+  const _CategoryChips({required this.wrap, required this.children});
+  final bool wrap;
+  final List<Widget> children;
+
+  @override
+  Widget build(BuildContext context) {
+    if (wrap) {
+      return Wrap(
+        spacing: 8,
+        runSpacing: 8,
+        children: [for (final c in children) SizedBox(height: 34, child: IntrinsicWidth(child: c))],
+      );
+    }
+    return SizedBox(
+      height: 36,
+      child: ListView(scrollDirection: Axis.horizontal, children: children),
     );
   }
 }

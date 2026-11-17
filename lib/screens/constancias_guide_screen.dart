@@ -8,6 +8,7 @@ import 'package:url_launcher/url_launcher.dart';
 
 import '../core/theme/app_colors.dart';
 import '../widgets/glass.dart';
+import '../widgets/responsive.dart';
 
 /// Guía para solicitar constancias y cartas de presentación.
 ///
@@ -202,7 +203,7 @@ class _ConstanciasGuideScreenState extends State<ConstanciasGuideScreen> {
       ),
       body: SafeArea(
         child: ListView(
-          padding: const EdgeInsets.fromLTRB(16, 8, 16, 32),
+          padding: centeredListPadding(context, horizontal: 16, top: 8, bottom: 32),
           children: [
             Text('Constancias y cartas de presentación',
                 style: TextStyle(color: fg, fontSize: 20, fontWeight: FontWeight.bold)),

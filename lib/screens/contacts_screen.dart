@@ -1,6 +1,7 @@
 import 'package:flutter/material.dart';
 import 'teacher_profile_screen.dart';
 import '../widgets/glass.dart';
+import '../widgets/responsive.dart';
 
 class Contact {
   final String id;
@@ -84,6 +85,7 @@ class ContactsScreen extends StatelessWidget {
         foregroundColor: Colors.white,
       ),
       body: ListView.builder(
+        padding: centeredListPadding(context, horizontal: 0, top: 8, bottom: 24),
         itemCount: teachers.length,
         itemBuilder: (ctx, index) {
           final teacher = teachers[index];

@@ -11,6 +11,7 @@ import 'contacts_screen.dart';
 import 'panorama_viewer.dart';
 import 'teacher_profile_screen.dart';
 import '../widgets/glass.dart';
+import '../widgets/responsive.dart';
 
 class ToursScreen extends StatelessWidget {
   const ToursScreen({super.key});
@@ -23,7 +24,7 @@ class ToursScreen extends StatelessWidget {
     return GlassScaffold(
       backgroundColor: isDark ? AppColors.darkBg : AppColors.lightBg,
       body: SafeArea(
-        child: CustomScrollView(
+        child: ResponsiveCenter(maxWidth: 900, child: CustomScrollView(
           slivers: [
             SliverToBoxAdapter(
               child: Padding(
@@ -151,7 +152,7 @@ class ToursScreen extends StatelessWidget {
             ],
             const SliverToBoxAdapter(child: SizedBox(height: 100)),
           ],
-        ),
+        )),
       ),
     );
   }

@@ -2,6 +2,7 @@ import 'package:flutter/material.dart';
 import 'package:url_launcher/url_launcher.dart'; // ← Agregar esta importación
 import 'contacts_screen.dart';
 import '../widgets/glass.dart';
+import '../widgets/responsive.dart';
 
 class TeacherProfileScreen extends StatelessWidget {
   final Contact teacher;
@@ -35,7 +36,7 @@ class TeacherProfileScreen extends StatelessWidget {
         foregroundColor: Colors.white,
       ),
       body: SingleChildScrollView(
-        padding: const EdgeInsets.all(24),
+        padding: centeredListPadding(context, horizontal: 24, top: 24, bottom: 24),
         child: Column(
           children: [
             CircleAvatar(

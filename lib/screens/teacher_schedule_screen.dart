@@ -1,5 +1,6 @@
 import 'package:flutter/material.dart';
 import '../widgets/glass.dart';
+import '../widgets/responsive.dart';
 
 class TeacherScheduleScreen extends StatefulWidget {
   const TeacherScheduleScreen({super.key});
@@ -85,7 +86,7 @@ class _TeacherScheduleScreenState extends State<TeacherScheduleScreen>
       forceDark: true,
       backgroundColor: const Color(0xFF1E1E2C),
       body: SafeArea(
-        child: Column(
+        child: ResponsiveCenter(child: Column(
           children: [
             // AppBar personalizada
             Container(
@@ -201,7 +202,7 @@ class _TeacherScheduleScreenState extends State<TeacherScheduleScreen>
               ),
             ),
           ],
-        ),
+        )),
       ),
     );
   }

@@ -8,6 +8,7 @@ import '../providers/onboarding_provider.dart';
 import '../providers/theme_provider.dart';
 import '../widgets/admin_badge.dart';
 import '../widgets/glass.dart';
+import '../widgets/responsive.dart';
 
 class MoreScreen extends StatelessWidget {
   const MoreScreen({super.key});
@@ -21,7 +22,7 @@ class MoreScreen extends StatelessWidget {
     return GlassScaffold(
       body: SafeArea(
         child: ListView(
-          padding: const EdgeInsets.fromLTRB(20, 16, 20, 100),
+          padding: centeredListPadding(context),
           children: [
             _Header(auth: auth, isDark: isDark),
             const SizedBox(height: 20),
