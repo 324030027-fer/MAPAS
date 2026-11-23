@@ -41,3 +41,4 @@ android/build/
 # Artefactos de compilación sueltos
 *.dill
 *.cache.dill.track.dill
+apk/
