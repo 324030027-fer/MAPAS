@@ -15,7 +15,7 @@ class _MapOnboardingOverlayState extends State<MapOnboardingOverlay> {
 
   static const _steps = [
     (Icons.pinch, 'Haz zoom', 'Pellizca o usa dos dedos para acercar el mapa del campus.'),
-    (Icons.touch_app, 'Explora edificios', 'Toca un pin para ver fotos, laboratorios y horarios.'),
+    (Icons.touch_app, 'Explora edificios', 'Toca un edificio para acercarte y ver sus salones, laboratorios y baños.'),
     (Icons.vrpano, 'Recorridos 360°', 'En la pestaña Recorridos entra al tour virtual del LT.'),
   ];
 
@@ -41,6 +41,11 @@ class _MapOnboardingOverlayState extends State<MapOnboardingOverlay> {
                 ),
               ),
               const Spacer(),
+              // Bloque central con ancho máximo: en PC no se estira.
+              ConstrainedBox(
+                constraints: const BoxConstraints(maxWidth: 420),
+                child: Column(
+                  children: [
               Icon(icon, size: 72, color: AppColors.accent),
               const SizedBox(height: 24),
               Text(
@@ -82,10 +87,15 @@ class _MapOnboardingOverlayState extends State<MapOnboardingOverlay> {
                   },
                   style: FilledButton.styleFrom(
                     backgroundColor: AppColors.primary,
+                    foregroundColor: Colors.white,
                     padding: const EdgeInsets.symmetric(vertical: 16),
                     shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(16)),
+                    textStyle: const TextStyle(fontWeight: FontWeight.bold, fontSize: 15),
                   ),
                   child: Text(_step < _steps.length - 1 ? 'Siguiente' : '¡Listo!'),
+                ),
+              ),
+                  ],
                 ),
               ),
               const Spacer(),
