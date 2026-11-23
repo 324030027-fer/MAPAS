@@ -1,22 +1,36 @@
 import 'package:flutter/material.dart';
 
-/// Paleta unificada NULLCORE MAPS / UPJR Campus.
+/// Paleta "Pizarra y ámbar" de NULLCORE MAPS / UPJR Campus.
+///
+/// Un solo color de acento (ámbar, cercano al naranja del logo UPJR) sobre
+/// fondos azul pizarra. Sin neones: el ámbar marca lo importante y todo lo
+/// demás es neutro.
 abstract final class AppColors {
-  static const primary = Color(0xFF6C63FF);
-  static const accent = Color(0xFF00E5FF);
-  static const highlight = Color(0xFFFF8C00);
-  static const danger = Color(0xFFFF2E63);
-  static const admin = Color(0xFFFF6B00);
+  /// Ámbar: botones, selección, chips activos, íconos de acento.
+  static const primary = Color(0xFFE8A33D);
+  static const accent = Color(0xFFE8A33D);
 
-  static const darkBg = Color(0xFF1E1E2C);
-  static const darkSurface = Color(0xFF2D2D44);
-  static const darkCard = Color(0xFF252538);
+  /// Ámbar claro para resaltar (selección en el mapa, avisos "en curso").
+  static const highlight = Color(0xFFF0BC66);
 
-  static const lightBg = Color(0xFFF0F4F8);
+  /// Texto e íconos SOBRE un relleno ámbar (el blanco no se lee).
+  static const onAccent = Color(0xFF2B1D06);
+
+  /// Ámbar oscuro para texto/íconos de acento en modo claro.
+  static const accentOnLight = Color(0xFF9A6412);
+
+  static const danger = Color(0xFFE5484D);
+  static const admin = Color(0xFFD9822B);
+
+  static const darkBg = Color(0xFF1B2230);
+  static const darkSurface = Color(0xFF263042);
+  static const darkCard = Color(0xFF222B3A);
+
+  static const lightBg = Color(0xFFF3F4F6);
   static const lightSurface = Colors.white;
 
-  static const textPrimaryDark = Colors.white;
-  static const textSecondaryDark = Color(0xB3FFFFFF);
-  static const textPrimaryLight = Color(0xFF1E1E2C);
-  static const textSecondaryLight = Color(0xFF5A5A72);
+  static const textPrimaryDark = Color(0xFFF2F4F7);
+  static const textSecondaryDark = Color(0x9EF2F4F7);
+  static const textPrimaryLight = Color(0xFF1B2230);
+  static const textSecondaryLight = Color(0xFF5B6472);
 }

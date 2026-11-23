@@ -119,7 +119,7 @@ class _ScheduleAdminScreenState extends State<ScheduleAdminScreen> {
   ) {
     return Container(
       padding: const EdgeInsets.all(16),
-      color: const Color(0xFF2D2D44),
+      color: const Color(0xFF263042),
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.stretch,
         children: [
@@ -127,7 +127,7 @@ class _ScheduleAdminScreenState extends State<ScheduleAdminScreen> {
           const SizedBox(height: 6),
           DropdownButtonFormField<String>(
             initialValue: _selectedLocationId,
-            dropdownColor: const Color(0xFF2D2D44),
+            dropdownColor: const Color(0xFF263042),
             style: const TextStyle(color: Colors.white),
             decoration: _inputDecoration(),
             items: mapProvider.mapPoints
@@ -160,7 +160,7 @@ class _ScheduleAdminScreenState extends State<ScheduleAdminScreen> {
                     const SizedBox(height: 6),
                     DropdownButtonFormField<int>(
                       initialValue: labs.isEmpty ? null : _selectedLabIndex,
-                      dropdownColor: const Color(0xFF2D2D44),
+                      dropdownColor: const Color(0xFF263042),
                       style: const TextStyle(color: Colors.white),
                       decoration: _inputDecoration(),
                       items: labs.asMap().entries.map((e) {
@@ -187,13 +187,13 @@ class _ScheduleAdminScreenState extends State<ScheduleAdminScreen> {
                 onPressed: _selectedLocationId == null
                     ? null
                     : () => _showNewLabDialog(scheduleProvider),
-                icon: const Icon(Icons.add_circle_outline, color: Color(0xFF00E5FF)),
+                icon: const Icon(Icons.add_circle_outline, color: Color(0xFFE8A33D)),
               ),
               if (labs.isNotEmpty)
                 IconButton(
                   tooltip: 'Eliminar laboratorio',
                   onPressed: () => _deleteLab(scheduleProvider),
-                  icon: const Icon(Icons.delete_outline, color: Color(0xFFFF2E63)),
+                  icon: const Icon(Icons.delete_outline, color: Color(0xFFE5484D)),
                 ),
             ],
           ),
@@ -339,7 +339,7 @@ class _ScheduleAdminScreenState extends State<ScheduleAdminScreen> {
       child: DropdownButton<String>(
         value: kWeekDays.contains(entry.day) ? entry.day : kWeekDays.first,
         isExpanded: true,
-        dropdownColor: const Color(0xFF2D2D44),
+        dropdownColor: const Color(0xFF263042),
         style: const TextStyle(color: Colors.white, fontSize: 12),
         items: kWeekDays.map((d) => DropdownMenuItem(value: d, child: Text(d))).toList(),
         onChanged: (day) {
@@ -486,10 +486,10 @@ class _ScheduleAdminScreenState extends State<ScheduleAdminScreen> {
     ScaffoldMessenger.of(context).showSnackBar(
       SnackBar(
         content: const Text('Horarios guardados'),
-        backgroundColor: AppColors.accent,
+        backgroundColor: AppColors.darkSurface,
         action: SnackBarAction(
           label: 'Deshacer',
-          textColor: Colors.white,
+          textColor: AppColors.accent,
           onPressed: () async {
             if (_undoSnapshot == null) return;
             final undoLabs = List<LabSchedule>.from(provider.getSchedulesForLocation(locationId));
@@ -508,7 +508,7 @@ class _ScheduleAdminScreenState extends State<ScheduleAdminScreen> {
     final name = await showDialog<String>(
       context: context,
       builder: (ctx) => AlertDialog(
-        backgroundColor: const Color(0xFF2D2D44),
+        backgroundColor: const Color(0xFF263042),
         title: const Text('Nuevo laboratorio', style: TextStyle(color: Colors.white)),
         content: TextField(
           controller: controller,
@@ -522,7 +522,7 @@ class _ScheduleAdminScreenState extends State<ScheduleAdminScreen> {
           TextButton(onPressed: () => Navigator.pop(ctx), child: const Text('Cancelar')),
           FilledButton(
             onPressed: () => Navigator.pop(ctx, controller.text.trim()),
-            style: FilledButton.styleFrom(backgroundColor: const Color(0xFFFF8C00)),
+            style: FilledButton.styleFrom(backgroundColor: const Color(0xFFE8A33D)),
             child: const Text('Crear'),
           ),
         ],
@@ -546,14 +546,14 @@ class _ScheduleAdminScreenState extends State<ScheduleAdminScreen> {
     final confirm = await showDialog<bool>(
       context: context,
       builder: (ctx) => AlertDialog(
-        backgroundColor: const Color(0xFF2D2D44),
+        backgroundColor: const Color(0xFF263042),
         title: const Text('¿Eliminar laboratorio?', style: TextStyle(color: Colors.white)),
         content: const Text('Se borrarán todas las filas de horario.', style: TextStyle(color: Colors.white70)),
         actions: [
           TextButton(onPressed: () => Navigator.pop(ctx, false), child: const Text('Cancelar')),
           FilledButton(
             onPressed: () => Navigator.pop(ctx, true),
-            style: FilledButton.styleFrom(backgroundColor: const Color(0xFFFF2E63)),
+            style: FilledButton.styleFrom(backgroundColor: const Color(0xFFE5484D)),
             child: const Text('Eliminar'),
           ),
         ],
@@ -572,7 +572,7 @@ class _ScheduleAdminScreenState extends State<ScheduleAdminScreen> {
     final confirm = await showDialog<bool>(
       context: context,
       builder: (ctx) => AlertDialog(
-        backgroundColor: const Color(0xFF2D2D44),
+        backgroundColor: const Color(0xFF263042),
         title: const Text('Restaurar horarios', style: TextStyle(color: Colors.white)),
         content: const Text(
           'Se reemplazarán los horarios de este edificio con los valores originales.',
@@ -597,7 +597,7 @@ class _ScheduleAdminScreenState extends State<ScheduleAdminScreen> {
     final discard = await showDialog<bool>(
       context: context,
       builder: (ctx) => AlertDialog(
-        backgroundColor: const Color(0xFF2D2D44),
+        backgroundColor: const Color(0xFF263042),
         title: const Text('Cambios sin guardar', style: TextStyle(color: Colors.white)),
         content: const Text('¿Descartar los cambios?', style: TextStyle(color: Colors.white70)),
         actions: [
@@ -613,7 +613,7 @@ class _ScheduleAdminScreenState extends State<ScheduleAdminScreen> {
   InputDecoration _inputDecoration() {
     return InputDecoration(
       filled: true,
-      fillColor: const Color(0xFF1E1E2C),
+      fillColor: const Color(0xFF1B2230),
       border: OutlineInputBorder(borderRadius: BorderRadius.circular(12)),
       enabledBorder: OutlineInputBorder(
         borderRadius: BorderRadius.circular(12),
@@ -628,7 +628,7 @@ class _ScheduleAdminScreenState extends State<ScheduleAdminScreen> {
       hintText: hint,
       hintStyle: const TextStyle(color: Colors.white38, fontSize: 11),
       filled: true,
-      fillColor: const Color(0xFF1E1E2C),
+      fillColor: const Color(0xFF1B2230),
       border: OutlineInputBorder(borderRadius: BorderRadius.circular(8)),
       contentPadding: const EdgeInsets.symmetric(horizontal: 8, vertical: 8),
     );

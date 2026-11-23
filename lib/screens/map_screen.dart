@@ -167,7 +167,7 @@ class _MapScreenState extends State<MapScreen> with TickerProviderStateMixin {
                         border: Border.all(color: Colors.white, width: 2),
                         boxShadow: [BoxShadow(color: color.withValues(alpha: 0.6), blurRadius: 8, spreadRadius: 1)],
                       ),
-                      child: Icon(z.kind.icon, color: Colors.white, size: 16),
+                      child: Icon(z.kind.icon, color: AppColors.onAccent, size: 16),
                     ),
                   ),
                 ),
@@ -672,7 +672,7 @@ class _MapScreenState extends State<MapScreen> with TickerProviderStateMixin {
                             'Mapa interactivo',
                             style: TextStyle(
                               // En modo claro el cian se pierde: tono más oscuro.
-                              color: isDark ? AppColors.accent.withValues(alpha: 0.9) : const Color(0xFF00838F),
+                              color: isDark ? AppColors.accent.withValues(alpha: 0.9) : const Color(0xFF9A6412),
                               fontSize: 12,
                               fontWeight: FontWeight.w600,
                               letterSpacing: 1.5,
@@ -735,7 +735,7 @@ class _MapScreenState extends State<MapScreen> with TickerProviderStateMixin {
                                 style: TextStyle(
                                   fontSize: 12,
                                   fontWeight: selected ? FontWeight.w800 : FontWeight.w600,
-                                  color: selected || isDark ? Colors.white : AppColors.textPrimaryLight,
+                                  color: isDark ? Colors.white : (selected ? AppColors.onAccent : AppColors.textPrimaryLight),
                                 ),
                               ),
                             ),
@@ -1014,7 +1014,7 @@ class _PinPreviewCard extends StatelessWidget {
     return GlassContainer(
       radius: 20,
       blur: 12,
-      tint: const Color(0xFF23233A),
+      tint: const Color(0xFF222B3A),
       tintStrength: 3.4,
       uniform: true,
       child: Column(

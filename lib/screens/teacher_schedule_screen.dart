@@ -84,7 +84,7 @@ class _TeacherScheduleScreenState extends State<TeacherScheduleScreen>
   Widget build(BuildContext context) {
     return GlassScaffold(
       forceDark: true,
-      backgroundColor: const Color(0xFF1E1E2C),
+      backgroundColor: const Color(0xFF1B2230),
       body: SafeArea(
         child: ResponsiveCenter(child: Column(
           children: [
@@ -96,8 +96,8 @@ class _TeacherScheduleScreenState extends State<TeacherScheduleScreen>
                   begin: Alignment.topLeft,
                   end: Alignment.bottomRight,
                   colors: [
-                    const Color(0xFFFF8C00).withOpacity(0.15),
-                    const Color(0xFF1E1E2C),
+                    const Color(0xFFE8A33D).withOpacity(0.15),
+                    const Color(0xFF1B2230),
                   ],
                 ),
                 borderRadius: const BorderRadius.vertical(bottom: Radius.circular(24)),
@@ -106,11 +106,11 @@ class _TeacherScheduleScreenState extends State<TeacherScheduleScreen>
                 children: [
                   Container(
                     decoration: BoxDecoration(
-                      color: const Color(0xFFFF8C00).withOpacity(0.2),
+                      color: const Color(0xFFE8A33D).withOpacity(0.2),
                       shape: BoxShape.circle,
                     ),
                     child: IconButton(
-                      icon: const Icon(Icons.arrow_back, color: Color(0xFFFF8C00)),
+                      icon: const Icon(Icons.arrow_back, color: Color(0xFFE8A33D)),
                       onPressed: () => Navigator.pop(context),
                     ),
                   ),
@@ -120,7 +120,7 @@ class _TeacherScheduleScreenState extends State<TeacherScheduleScreen>
                     height: 50,
                     decoration: BoxDecoration(
                       shape: BoxShape.circle,
-                      border: Border.all(color: const Color(0xFFFF8C00), width: 2),
+                      border: Border.all(color: const Color(0xFFE8A33D), width: 2),
                       image: DecorationImage(
                         image: ResizeImage(AssetImage('assets/erickphoto.png'), width: 300),
                         fit: BoxFit.cover,
@@ -143,7 +143,7 @@ class _TeacherScheduleScreenState extends State<TeacherScheduleScreen>
                         Text(
                           "Horario de clases",
                           style: TextStyle(
-                            color: const Color(0xFFFF8C00),
+                            color: const Color(0xFFE8A33D),
                             fontSize: 12,
                             fontWeight: FontWeight.w500,
                           ),
@@ -160,14 +160,14 @@ class _TeacherScheduleScreenState extends State<TeacherScheduleScreen>
               padding: const EdgeInsets.symmetric(horizontal: 16),
               child: Container(
                 decoration: BoxDecoration(
-                  color: const Color(0xFF2D2D44),
+                  color: const Color(0xFF263042),
                   borderRadius: BorderRadius.circular(30),
                 ),
                 child: TabBar(
                   controller: _tabController,
                   isScrollable: false,
                   indicator: BoxDecoration(
-                    color: const Color(0xFFFF8C00),
+                    color: const Color(0xFFE8A33D),
                     borderRadius: BorderRadius.circular(30),
                   ),
                   labelColor: Colors.white,
@@ -256,7 +256,7 @@ class _ScheduleCard extends StatelessWidget {
               width: 80,
               padding: const EdgeInsets.symmetric(vertical: 8),
               decoration: BoxDecoration(
-                color: const Color(0xFF1E1E2C),
+                color: const Color(0xFF1B2230),
                 borderRadius: BorderRadius.circular(12),
               ),
               child: Column(
@@ -264,7 +264,7 @@ class _ScheduleCard extends StatelessWidget {
                   Text(
                     startTime,
                     style: const TextStyle(
-                      color: Color(0xFFFF8C00),
+                      color: Color(0xFFE8A33D),
                       fontWeight: FontWeight.bold,
                       fontSize: 16,
                     ),
@@ -276,7 +276,7 @@ class _ScheduleCard extends StatelessWidget {
                   Text(
                     endTime,
                     style: const TextStyle(
-                      color: Color(0xFFFF8C00),
+                      color: Color(0xFFE8A33D),
                       fontWeight: FontWeight.bold,
                       fontSize: 16,
                     ),
@@ -303,13 +303,13 @@ class _ScheduleCard extends StatelessWidget {
                     Container(
                       padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 2),
                       decoration: BoxDecoration(
-                        color: const Color(0xFFFF8C00).withOpacity(0.2),
+                        color: const Color(0xFFE8A33D).withOpacity(0.2),
                         borderRadius: BorderRadius.circular(12),
                       ),
                       child: Text(
                         group,
                         style: const TextStyle(
-                          color: Color(0xFFFF8C00),
+                          color: Color(0xFFE8A33D),
                           fontSize: 11,
                           fontWeight: FontWeight.w500,
                         ),
@@ -332,7 +332,7 @@ class _ScheduleCard extends StatelessWidget {
               type == "Proyecto" ? Icons.assignment :
               type == "Asesoría" ? Icons.people :
               Icons.school,
-              color: const Color(0xFFFF8C00).withOpacity(0.7),
+              color: const Color(0xFFE8A33D).withOpacity(0.7),
               size: 28,
             ),
           ],

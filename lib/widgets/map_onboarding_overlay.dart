@@ -87,7 +87,7 @@ class _MapOnboardingOverlayState extends State<MapOnboardingOverlay> {
                   },
                   style: FilledButton.styleFrom(
                     backgroundColor: AppColors.primary,
-                    foregroundColor: Colors.white,
+                    foregroundColor: AppColors.onAccent,
                     padding: const EdgeInsets.symmetric(vertical: 16),
                     shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(16)),
                     textStyle: const TextStyle(fontWeight: FontWeight.bold, fontSize: 15),

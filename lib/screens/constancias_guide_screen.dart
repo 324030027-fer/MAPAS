@@ -172,7 +172,7 @@ class _ConstanciasGuideScreenState extends State<ConstanciasGuideScreen> {
                   CircleAvatar(
                     radius: 14,
                     backgroundColor: AppColors.primary,
-                    child: Text('$n', style: const TextStyle(color: Colors.white, fontWeight: FontWeight.bold)),
+                    child: Text('$n', style: const TextStyle(color: AppColors.onAccent, fontWeight: FontWeight.bold)),
                   ),
                   const SizedBox(width: 10),
                   Expanded(child: Text(title, style: TextStyle(color: fg, fontWeight: FontWeight.bold, fontSize: 15))),

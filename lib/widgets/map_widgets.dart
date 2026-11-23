@@ -48,7 +48,7 @@ class MapMarker extends StatelessWidget {
                 border: Border.all(color: Colors.white, width: 2.5),
                 boxShadow: [BoxShadow(color: mainColor.withOpacity(0.6), blurRadius: 10, spreadRadius: 2)],
               ),
-              child: Icon(location.icon, color: Colors.white, size: 20),
+              child: Icon(location.icon, color: AppColors.onAccent, size: 20),
             ),
             if (showLabel || isSelected)
             Positioned(
@@ -107,7 +107,7 @@ class LocationDetailSheet extends StatelessWidget {
     return GlassContainer(
       borderRadius: const BorderRadius.vertical(top: Radius.circular(32)),
       blur: 16,
-      tint: const Color(0xFF23233A),
+      tint: const Color(0xFF222B3A),
       tintStrength: 3.4,
       uniform: true,
       child: DefaultTabController(
@@ -167,8 +167,8 @@ class LocationDetailSheet extends StatelessWidget {
               ),
             ),
             TabBar(
-              indicatorColor: const Color(0xFFFF8C00),
-              labelColor: const Color(0xFFFF8C00),
+              indicatorColor: const Color(0xFFE8A33D),
+              labelColor: const Color(0xFFE8A33D),
               unselectedLabelColor: Colors.white70,
               tabs: tabTitles.map((title) => Tab(text: title)).toList(),
             ),
@@ -187,7 +187,7 @@ class LocationDetailSheet extends StatelessWidget {
                         Row(
                           crossAxisAlignment: CrossAxisAlignment.start,
                           children: [
-                            Icon(Icons.description, color: const Color(0xFFFF8C00), size: 22),
+                            Icon(Icons.description, color: const Color(0xFFE8A33D), size: 22),
                             const SizedBox(width: 12),
                             Expanded(
                               child: Text(
@@ -201,7 +201,7 @@ class LocationDetailSheet extends StatelessWidget {
                         if (location.features.isNotEmpty && location.features != "• Acceso Controlado") ...[
                           Container(
                             decoration: BoxDecoration(
-                              color: const Color(0xFF1E1E2C),
+                              color: const Color(0xFF1B2230),
                               borderRadius: BorderRadius.circular(16),
                               border: Border.all(color: Colors.white.withOpacity(0.1)),
                             ),
@@ -212,12 +212,12 @@ class LocationDetailSheet extends StatelessWidget {
                                 children: [
                                   Row(
                                     children: [
-                                      Icon(Icons.star, color: const Color(0xFFFF8C00), size: 18),
+                                      Icon(Icons.star, color: const Color(0xFFE8A33D), size: 18),
                                       const SizedBox(width: 8),
                                       const Text(
                                         "CARACTERÍSTICAS DESTACADAS",
                                         style: TextStyle(
-                                          color: Color(0xFFFF8C00),
+                                          color: Color(0xFFE8A33D),
                                           fontWeight: FontWeight.bold,
                                           fontSize: 12,
                                           letterSpacing: 1,
@@ -290,7 +290,7 @@ class LocationDetailSheet extends StatelessWidget {
         child: Row(
           crossAxisAlignment: CrossAxisAlignment.start,
           children: [
-            const Icon(Icons.check_circle, color: Color(0xFFFF8C00), size: 16),
+            const Icon(Icons.check_circle, color: Color(0xFFE8A33D), size: 16),
             const SizedBox(width: 8),
             Expanded(child: Text(cleanLine, style: const TextStyle(color: Colors.white70, fontSize: 13))),
           ],
@@ -302,12 +302,12 @@ class LocationDetailSheet extends StatelessWidget {
   Widget _buildCareerSection(BuildContext context, CareerInfo career) {
     return Container(
       margin: const EdgeInsets.only(bottom: 20),
-      decoration: BoxDecoration(color: const Color(0xFF1E1E2C), borderRadius: BorderRadius.circular(16), border: Border.all(color: Colors.white10)),
+      decoration: BoxDecoration(color: const Color(0xFF1B2230), borderRadius: BorderRadius.circular(16), border: Border.all(color: Colors.white10)),
       child: Theme(
         data: Theme.of(context).copyWith(dividerColor: Colors.transparent),
         child: ExpansionTile(
           title: Text(career.name, style: const TextStyle(color: Colors.white, fontWeight: FontWeight.bold)),
-          leading: const Icon(Icons.school, color: Color(0xFFFF8C00)),
+          leading: const Icon(Icons.school, color: Color(0xFFE8A33D)),
           childrenPadding: const EdgeInsets.all(16),
           expandedCrossAxisAlignment: CrossAxisAlignment.start,
           children: career.labs.map((lab) => _buildLabItem(context, lab)).toList(),
@@ -320,7 +320,7 @@ class LocationDetailSheet extends StatelessWidget {
     return Container(
       margin: const EdgeInsets.only(bottom: 16),
       padding: const EdgeInsets.all(12),
-      decoration: BoxDecoration(color: const Color(0xFF2D2D44), borderRadius: BorderRadius.circular(12), border: Border.all(color: Colors.white.withOpacity(0.05))),
+      decoration: BoxDecoration(color: const Color(0xFF263042), borderRadius: BorderRadius.circular(12), border: Border.all(color: Colors.white.withOpacity(0.05))),
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
@@ -340,7 +340,7 @@ class LocationDetailSheet extends StatelessWidget {
                     const SizedBox(height: 4),
                     if (context.watch<AuthProvider>().canSeePrivate) ...[
                       Text("Encargado: ${lab.inCharge}", style: TextStyle(color: Colors.white.withOpacity(0.6), fontSize: 11)),
-                      Text(lab.contact, style: const TextStyle(color: Color(0xFFFF8C00), fontSize: 11)),
+                      Text(lab.contact, style: const TextStyle(color: Color(0xFFE8A33D), fontSize: 11)),
                     ],
                   ],
                 ),
@@ -365,8 +365,8 @@ class LocationDetailSheet extends StatelessWidget {
                 icon: const Icon(Icons.threesixty, size: 18),
                 label: const Text("VER LABORATORIO EN VISTA 360"),
                 style: OutlinedButton.styleFrom(
-                  foregroundColor: const Color(0xFFFF8C00),
-                  side: const BorderSide(color: Color(0xFFFF8C00)),
+                  foregroundColor: const Color(0xFFE8A33D),
+                  side: const BorderSide(color: Color(0xFFE8A33D)),
                 ),
               ),
             ),
@@ -447,7 +447,7 @@ class _LocationPhotoCarouselState extends State<_LocationPhotoCarousel> {
           mainAxisAlignment: MainAxisAlignment.center,
           children: [
             IconButton(
-              icon: const Icon(Icons.arrow_back_ios, color: Color(0xFFFF8C00)),
+              icon: const Icon(Icons.arrow_back_ios, color: Color(0xFFE8A33D)),
               onPressed: _currentIndex > 0
                   ? () => setState(() => _currentIndex--)
                   : null,
@@ -457,7 +457,7 @@ class _LocationPhotoCarouselState extends State<_LocationPhotoCarousel> {
               style: const TextStyle(color: Colors.white70),
             ),
             IconButton(
-              icon: const Icon(Icons.arrow_forward_ios, color: Color(0xFFFF8C00)),
+              icon: const Icon(Icons.arrow_forward_ios, color: Color(0xFFE8A33D)),
               onPressed: _currentIndex < widget.images.length - 1
                   ? () => setState(() => _currentIndex++)
                   : null,

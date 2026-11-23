@@ -52,8 +52,8 @@ class _LabScheduleViewerState extends State<LabScheduleViewer> {
                       });
                     }
                   },
-                  selectedColor: const Color(0xFFFF8C00), // Naranja vibrante
-                  backgroundColor: const Color(0xFF1E1E2C),
+                  selectedColor: const Color(0xFFE8A33D), // Naranja vibrante
+                  backgroundColor: const Color(0xFF1B2230),
                   checkmarkColor: Colors.white,
                   labelStyle: TextStyle(
                     color: isSelected ? Colors.white : Colors.white70,
@@ -69,7 +69,7 @@ class _LabScheduleViewerState extends State<LabScheduleViewer> {
         // Selector de día (pestañas horizontales)
         Container(
           decoration: BoxDecoration(
-            color: const Color(0xFF1E1E2C),
+            color: const Color(0xFF1B2230),
             borderRadius: BorderRadius.circular(30),
           ),
           child: Row(
@@ -81,7 +81,7 @@ class _LabScheduleViewerState extends State<LabScheduleViewer> {
                   child: Container(
                     padding: const EdgeInsets.symmetric(vertical: 10),
                     decoration: BoxDecoration(
-                      color: isSelected ? const Color(0xFFFF8C00) : Colors.transparent,
+                      color: isSelected ? const Color(0xFFE8A33D) : Colors.transparent,
                       borderRadius: BorderRadius.circular(30),
                     ),
                     child: Text(

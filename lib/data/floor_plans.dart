@@ -6,7 +6,7 @@ enum ZoneKind {
   administrativo(Color(0xFF2ECC71), Icons.badge_outlined, 'Administrativo'),
   cubiculos(Color(0xFFE74C3C), Icons.meeting_room_outlined, 'Cubículos'),
   banos(Color(0xFF5B5BFF), Icons.wc, 'Baños'),
-  salon(Color(0xFFFF8C00), Icons.class_outlined, 'Salón'),
+  salon(Color(0xFFE8A33D), Icons.class_outlined, 'Salón'),
   pendiente(Color(0xFF9E9E9E), Icons.hourglass_empty, 'Por definir');
 
   const ZoneKind(this.color, this.icon, this.label);

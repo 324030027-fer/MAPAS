@@ -66,7 +66,7 @@ class _LoginScreenState extends State<LoginScreen> {
                 Container(
                   padding: const EdgeInsets.all(16),
                   decoration: BoxDecoration(
-                    color: const Color(0xFF6C63FF).withValues(alpha: 0.15),
+                    color: const Color(0xFFE8A33D).withValues(alpha: 0.15),
                     shape: BoxShape.circle,
                   ),
                   child: ClipOval(
@@ -80,10 +80,10 @@ class _LoginScreenState extends State<LoginScreen> {
                         return Container(
                           width: 100,
                           height: 100,
-                          color: const Color(0xFF6C63FF),
+                          color: AppColors.primary,
                           child: const Icon(
                             Icons.map_rounded,
-                            color: Colors.white,
+                            color: AppColors.onAccent,
                             size: 60,
                           ),
                         );
@@ -96,7 +96,7 @@ class _LoginScreenState extends State<LoginScreen> {
                 // ========== TÍTULO GLORIOSO ==========
                 ShaderMask(
                   shaderCallback: (bounds) => const LinearGradient(
-                    colors: [Color(0xFF6C63FF), Color(0xFF00E5FF)],
+                    colors: [Color(0xFFE8A33D), Color(0xFFE8A33D)],
                     begin: Alignment.topLeft,
                     end: Alignment.bottomRight,
                   ).createShader(bounds),
@@ -139,12 +139,12 @@ class _LoginScreenState extends State<LoginScreen> {
                       children: [
                         const Row(
                           children: [
-                            Icon(Icons.school_outlined, color: Color(0xFFFF8C00)),
+                            Icon(Icons.school_outlined, color: Color(0xFFE8A33D)),
                             SizedBox(width: 12),
                             Text(
                               'COMUNIDAD UPJR',
                               style: TextStyle(
-                                color: Color(0xFFFF8C00),
+                                color: Color(0xFFE8A33D),
                                 fontWeight: FontWeight.bold,
                                 letterSpacing: 1.2,
                                 fontSize: 14,
@@ -172,7 +172,7 @@ class _LoginScreenState extends State<LoginScreen> {
                             label: const Text('INICIAR SESIÓN CON GOOGLE (UPJR)'),
                             style: FilledButton.styleFrom(
                               backgroundColor: Colors.white,
-                              foregroundColor: const Color(0xFF1E1E2C),
+                              foregroundColor: const Color(0xFF1B2230),
                               padding: const EdgeInsets.symmetric(vertical: 14),
                               shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(30)),
                             ),
@@ -203,12 +203,12 @@ class _LoginScreenState extends State<LoginScreen> {
                         Row(
                           children: [
                             const Icon(Icons.person_outline,
-                                color: Color(0xFF00E5FF)),
+                                color: Color(0xFFE8A33D)),
                             const SizedBox(width: 12),
                             const Text(
                               'ASPIRANTES Y VISITANTES',
                               style: TextStyle(
-                                color: Color(0xFF00E5FF),
+                                color: Color(0xFFE8A33D),
                                 fontWeight: FontWeight.bold,
                                 letterSpacing: 1.2,
                                 fontSize: 14,
@@ -228,7 +228,7 @@ class _LoginScreenState extends State<LoginScreen> {
                               borderRadius: BorderRadius.circular(16),
                             ),
                             focusedBorder: OutlineInputBorder(
-                              borderSide: const BorderSide(color: Color(0xFF00E5FF)),
+                              borderSide: const BorderSide(color: Color(0xFFE8A33D)),
                               borderRadius: BorderRadius.circular(16),
                             ),
                           ),
@@ -243,7 +243,7 @@ class _LoginScreenState extends State<LoginScreen> {
                                 ScaffoldMessenger.of(context).showSnackBar(
                                   const SnackBar(
                                     content: Text('Por favor ingresa tu nombre'),
-                                    backgroundColor: Color(0xFF00E5FF),
+                                    backgroundColor: AppColors.darkSurface,
                                   ),
                                 );
                                 return;
@@ -254,7 +254,7 @@ class _LoginScreenState extends State<LoginScreen> {
                             icon: const Icon(Icons.visibility),
                             label: const Text('INGRESAR COMO INVITADO'),
                             style: FilledButton.styleFrom(
-                              backgroundColor: const Color(0xFF6C63FF),
+                              backgroundColor: const Color(0xFFE8A33D),
                               padding: const EdgeInsets.symmetric(vertical: 14),
                               shape: RoundedRectangleBorder(
                                 borderRadius: BorderRadius.circular(30),

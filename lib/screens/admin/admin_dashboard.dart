@@ -113,6 +113,7 @@ class AdminDashboard extends StatelessWidget {
         label: const Text('Nueva ubicación'),
         icon: const Icon(Icons.add_location_alt),
         backgroundColor: AppColors.highlight,
+        foregroundColor: AppColors.onAccent,
       ),
     );
   }

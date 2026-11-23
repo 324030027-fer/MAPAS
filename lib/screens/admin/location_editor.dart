@@ -1,4 +1,5 @@
 import 'package:flutter/material.dart';
+import '../../core/theme/app_colors.dart';
 import 'package:provider/provider.dart';
 import '../../providers/map_provider.dart';
 import '../../models/map_location.dart';
@@ -52,10 +53,10 @@ class _LocationEditorState extends State<LocationEditor> {
       forceDark: true,
       appBar: AppBar(
         title: const Text("Editar Ubicación"),
-        backgroundColor: const Color(0xFF1E1E2C),
+        backgroundColor: const Color(0xFF1B2230),
         foregroundColor: Colors.white,
       ),
-      backgroundColor: const Color(0xFF1E1E2C),
+      backgroundColor: const Color(0xFF1B2230),
       body: Padding(
         padding: const EdgeInsets.all(16),
         child: SingleChildScrollView(
@@ -85,7 +86,7 @@ class _LocationEditorState extends State<LocationEditor> {
                 },
                 icon: const Icon(Icons.save),
                 label: const Text("Guardar Cambios"),
-                style: ElevatedButton.styleFrom(backgroundColor: const Color(0xFFFF8C00)),
+                style: ElevatedButton.styleFrom(backgroundColor: AppColors.primary, foregroundColor: AppColors.onAccent),
               ),
             ],
           ),
@@ -106,7 +107,7 @@ class _LocationEditorState extends State<LocationEditor> {
           labelText: label,
           labelStyle: const TextStyle(color: Colors.white70),
           enabledBorder: OutlineInputBorder(borderSide: const BorderSide(color: Colors.white24), borderRadius: BorderRadius.circular(12)),
-          focusedBorder: OutlineInputBorder(borderSide: const BorderSide(color: Color(0xFFFF8C00)), borderRadius: BorderRadius.circular(12)),
+          focusedBorder: OutlineInputBorder(borderSide: const BorderSide(color: Color(0xFFE8A33D)), borderRadius: BorderRadius.circular(12)),
         ),
       ),
     );

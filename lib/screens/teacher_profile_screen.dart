@@ -29,10 +29,10 @@ class TeacherProfileScreen extends StatelessWidget {
   Widget build(BuildContext context) {
     return GlassScaffold(
       forceDark: true,
-      backgroundColor: const Color(0xFF1E1E2C),
+      backgroundColor: const Color(0xFF1B2230),
       appBar: AppBar(
         title: const Text('Perfil del Profesor'),
-        backgroundColor: const Color(0xFF1E1E2C),
+        backgroundColor: const Color(0xFF1B2230),
         foregroundColor: Colors.white,
       ),
       body: SingleChildScrollView(
@@ -58,13 +58,13 @@ class TeacherProfileScreen extends StatelessWidget {
             Container(
               padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 6),
               decoration: BoxDecoration(
-                color: const Color(0xFF6C63FF).withOpacity(0.2),
+                color: const Color(0xFFE8A33D).withOpacity(0.2),
                 borderRadius: BorderRadius.circular(20),
               ),
               child: Text(
                 teacher.subject,
                 style: const TextStyle(
-                  color: Color(0xFF6C63FF),
+                  color: Color(0xFFE8A33D),
                   fontWeight: FontWeight.bold,
                 ),
               ),
@@ -81,8 +81,8 @@ class TeacherProfileScreen extends StatelessWidget {
               icon: const Icon(Icons.chat),
               label: const Text('ENVIAR MENSAJE'),
               style: OutlinedButton.styleFrom(
-                foregroundColor: const Color(0xFF00E5FF),
-                side: const BorderSide(color: Color(0xFF00E5FF)),
+                foregroundColor: const Color(0xFFE8A33D),
+                side: const BorderSide(color: Color(0xFFE8A33D)),
                 padding: const EdgeInsets.symmetric(
                   horizontal: 32,
                   vertical: 12,
@@ -103,7 +103,7 @@ class TeacherProfileScreen extends StatelessWidget {
       padding: const EdgeInsets.only(bottom: 16),
       child: Row(
         children: [
-          Icon(icon, color: const Color(0xFF00E5FF), size: 24),
+          Icon(icon, color: const Color(0xFFE8A33D), size: 24),
           const SizedBox(width: 16),
           Expanded(
             child: Column(

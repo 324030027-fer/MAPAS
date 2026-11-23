@@ -78,10 +78,10 @@ class ContactsScreen extends StatelessWidget {
   Widget build(BuildContext context) {
     return GlassScaffold(
       forceDark: true,
-      backgroundColor: const Color(0xFF1E1E2C),
+      backgroundColor: const Color(0xFF1B2230),
       appBar: AppBar(
         title: const Text('Contactos'),
-        backgroundColor: const Color(0xFF1E1E2C),
+        backgroundColor: const Color(0xFF1B2230),
         foregroundColor: Colors.white,
       ),
       body: ListView.builder(
@@ -106,7 +106,7 @@ class ContactsScreen extends StatelessWidget {
               ),
               trailing: const Icon(
                 Icons.arrow_forward_ios,
-                color: Color(0xFF00E5FF),
+                color: Color(0xFFE8A33D),
                 size: 16,
               ),
               onTap: () {

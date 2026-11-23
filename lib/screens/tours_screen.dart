@@ -225,7 +225,7 @@ class _TourCard extends StatelessWidget {
                     ),
                     child: Text(
                       badge,
-                      style: const TextStyle(color: AppColors.darkBg, fontSize: 10, fontWeight: FontWeight.w900),
+                      style: const TextStyle(color: AppColors.onAccent, fontSize: 10, fontWeight: FontWeight.w900),
                     ),
                   ),
                   const SizedBox(height: 10),

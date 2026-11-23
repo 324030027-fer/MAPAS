@@ -118,8 +118,8 @@ class GlassTag extends StatelessWidget {
           begin: Alignment.topLeft,
           end: Alignment.bottomRight,
           colors: [
-            const Color(0xFF1E1E2C).withValues(alpha: 0.55),
-            const Color(0xFF1E1E2C).withValues(alpha: 0.35),
+            const Color(0xFF1B2230).withValues(alpha: 0.55),
+            const Color(0xFF1B2230).withValues(alpha: 0.35),
           ],
         ),
         border: Border.all(color: Colors.white.withValues(alpha: 0.28)),
@@ -150,14 +150,15 @@ class GlassBackdrop extends StatelessWidget {
               begin: Alignment.topLeft,
               end: Alignment.bottomRight,
               colors: isDark
-                  ? [const Color(0xFF1B1A33), bg, const Color(0xFF14202E)]
-                  : [const Color(0xFFE8EEFF), bg, const Color(0xFFE3F6FA)],
+                  ? [const Color(0xFF1E2738), bg, const Color(0xFF171D29)]
+                  : [const Color(0xFFEDEFF3), bg, const Color(0xFFF6F1E8)],
             ),
           ),
         ),
-        _orb(const Alignment(-1.0, -0.8), 320, AppColors.primary, isDark ? 0.45 : 0.28),
-        _orb(const Alignment(1.1, -0.1), 280, AppColors.accent, isDark ? 0.28 : 0.22),
-        _orb(const Alignment(-0.6, 1.0), 300, AppColors.highlight, isDark ? 0.22 : 0.18),
+        // Fondos suaves: dos manchas azul pizarra y un solo toque ámbar tenue.
+        _orb(const Alignment(-1.0, -0.8), 320, const Color(0xFF3B4C6B), isDark ? 0.45 : 0.18),
+        _orb(const Alignment(1.1, -0.1), 280, const Color(0xFF2F4058), isDark ? 0.35 : 0.14),
+        _orb(const Alignment(-0.6, 1.0), 300, AppColors.accent, isDark ? 0.10 : 0.10),
         child,
       ],
     );

@@ -11,7 +11,7 @@ import '../models/map_location.dart';
 import 'glass.dart';
 
 // Tinte oscuro común de las ventanas de laboratorio (texto blanco encima).
-const Color _kLabTint = Color(0xFF23233A);
+const Color _kLabTint = Color(0xFF222B3A);
 
 /// Tamaño del hotspot que aloja a [LabHotspotCard] dentro del panorama.
 const double kLabHotspotWidth = 240;
