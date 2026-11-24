@@ -5,6 +5,7 @@ import '../models/map_location.dart';
 import '../models/tour.dart';
 import '../core/theme/app_colors.dart';
 import '../providers/auth_provider.dart';
+import '../providers/private_data_provider.dart';
 import '../providers/schedule_provider.dart';
 import '../screens/panorama_viewer.dart';
 import 'glass.dart';
@@ -338,9 +339,10 @@ class LocationDetailSheet extends StatelessWidget {
                   children: [
                     Text(lab.name, style: const TextStyle(color: Colors.white, fontWeight: FontWeight.bold)),
                     const SizedBox(height: 4),
-                    if (context.watch<AuthProvider>().canSeePrivate) ...[
-                      Text("Encargado: ${lab.inCharge}", style: TextStyle(color: Colors.white.withOpacity(0.6), fontSize: 11)),
-                      Text(lab.contact, style: const TextStyle(color: Color(0xFFE8A33D), fontSize: 11)),
+                    // Encargado y correo: vienen de Firestore (solo comunidad UPJR).
+                    if (context.watch<PrivateDataProvider>().labStaffByName(lab.name) case final staff?) ...[
+                      Text("Encargado: ${staff.inCharge}", style: TextStyle(color: Colors.white.withOpacity(0.6), fontSize: 11)),
+                      Text(staff.contact, style: const TextStyle(color: Color(0xFFE8A33D), fontSize: 11)),
                     ],
                   ],
                 ),

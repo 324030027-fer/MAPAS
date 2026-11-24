@@ -6,4 +6,3 @@ const List<String> kWeekDays = [
   'Viernes',
 ];
 
-const List<String> kDefaultScheduleLocationIds = ['LT_MAP', 'UD2'];

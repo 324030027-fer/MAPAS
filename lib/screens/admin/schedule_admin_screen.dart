@@ -197,18 +197,6 @@ class _ScheduleAdminScreenState extends State<ScheduleAdminScreen> {
                 ),
             ],
           ),
-          if (kDefaultScheduleLocationIds.contains(_selectedLocationId))
-            Padding(
-              padding: const EdgeInsets.only(top: 8),
-              child: TextButton.icon(
-                onPressed: () => _resetDefaults(scheduleProvider),
-                icon: const Icon(Icons.restore, size: 18, color: Colors.white54),
-                label: const Text(
-                  'Restaurar horarios originales de este edificio',
-                  style: TextStyle(color: Colors.white54, fontSize: 12),
-                ),
-              ),
-            ),
           const SizedBox(height: 8),
           Wrap(
             spacing: 6,
@@ -562,34 +550,6 @@ class _ScheduleAdminScreenState extends State<ScheduleAdminScreen> {
 
     if (confirm != true) return;
     await provider.removeLab(locationId, _selectedLabIndex);
-    _loadDraft(provider);
-  }
-
-  Future<void> _resetDefaults(ScheduleProvider provider) async {
-    final locationId = _selectedLocationId;
-    if (locationId == null) return;
-
-    final confirm = await showDialog<bool>(
-      context: context,
-      builder: (ctx) => AlertDialog(
-        backgroundColor: const Color(0xFF263042),
-        title: const Text('Restaurar horarios', style: TextStyle(color: Colors.white)),
-        content: const Text(
-          'Se reemplazarán los horarios de este edificio con los valores originales.',
-          style: TextStyle(color: Colors.white70),
-        ),
-        actions: [
-          TextButton(onPressed: () => Navigator.pop(ctx, false), child: const Text('Cancelar')),
-          FilledButton(
-            onPressed: () => Navigator.pop(ctx, true),
-            child: const Text('Restaurar'),
-          ),
-        ],
-      ),
-    );
-
-    if (confirm != true) return;
-    await provider.resetLocationToDefaults(locationId);
     _loadDraft(provider);
   }
 

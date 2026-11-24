@@ -6,6 +6,7 @@ import '../core/schedule_constants.dart';
 import '../core/theme/app_colors.dart';
 import '../core/utils/schedule_utils.dart';
 import '../providers/auth_provider.dart';
+import '../providers/private_data_provider.dart';
 import '../models/lab_schedule.dart';
 import '../models/map_location.dart';
 import 'glass.dart';
@@ -279,6 +280,8 @@ class _LabDetailPanelState extends State<LabDetailPanel> {
   Widget build(BuildContext context) {
     final lab = widget.lab;
     final canSeePrivate = context.watch<AuthProvider>().canSeePrivate;
+    // Encargado y correo vienen de Firestore (solo comunidad UPJR).
+    final staff = context.watch<PrivateDataProvider>().labStaffByName(lab.name);
     final maxHeight = MediaQuery.of(context).size.height * 0.74;
     final entries = [
       for (final s in widget.schedules) ...s.entries,
@@ -365,14 +368,14 @@ class _LabDetailPanelState extends State<LabDetailPanel> {
                     ),
                     const SizedBox(height: 14),
                     // Encargado y contacto: solo comunidad UPJR.
-                    if (canSeePrivate) ...[
-                      _InfoTile(icon: Icons.person_rounded, label: 'ENCARGADO', value: lab.inCharge),
+                    if (canSeePrivate && staff != null) ...[
+                      _InfoTile(icon: Icons.person_rounded, label: 'ENCARGADO', value: staff.inCharge),
                       const SizedBox(height: 8),
                       _InfoTile(
                         icon: Icons.mail_rounded,
                         label: 'CONTACTO',
-                        value: lab.contact,
-                        onTap: () => _mail(lab.contact),
+                        value: staff.contact,
+                        onTap: () => _mail(staff.contact),
                       ),
                       const SizedBox(height: 14),
                     ],

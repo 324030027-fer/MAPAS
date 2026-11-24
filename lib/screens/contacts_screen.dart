@@ -1,81 +1,19 @@
 import 'package:flutter/material.dart';
+import 'package:provider/provider.dart';
+
+import '../models/contact.dart';
+import '../providers/private_data_provider.dart';
 import 'teacher_profile_screen.dart';
 import '../widgets/glass.dart';
 import '../widgets/responsive.dart';
-
-class Contact {
-  final String id;
-  final String name;
-  final String subject;
-  final String email;
-  final String phone;
-  final String office;
-  final String imageAsset;
-
-  Contact({
-    required this.id,
-    required this.name,
-    required this.subject,
-    required this.email,
-    required this.phone,
-    required this.office,
-    required this.imageAsset,
-  });
-}
-
-final List<Contact> teachers = [
-  Contact(
-    id: '001',
-    name: 'Ing. Erick Fernando Montecillo Olivares',
-    subject: 'Redes y Telecomunicaciones',
-    email: 'emontecillo@upjr.edu.mx',
-    phone: 'Unknown',
-    office: 'Laboratorio de Electronica - LT',
-    imageAsset: 'assets/teacher_erick.png',
-  ),
-  Contact(
-    id: '002',
-    name: 'Doc. Joel Quintanilla Dominguez',
-    subject: 'Redes y Telecomunicaciones',
-    email: 'jquintanilla@upjr.edu.mx',
-    phone: 'Unknown',
-    office: 'UD1 - Primer Piso',
-    imageAsset: 'assets/teacher_joel.png',
-  ),
-  Contact(
-    id: '003',
-    name: 'Doc. Juan Israel Yañez Vargas',
-    subject: 'Redes y Telecomunicaciones',
-    email: 'jyanez@upjr.edu.mx',
-    phone: 'Unknown',
-    office: 'UD1 - Primer Piso',
-    imageAsset: 'assets/teacher_juan.png',
-  ),
-  Contact(
-    id: '004',
-    name: 'Ing. Juan Heriberto Gallegos Galindo',
-    subject: 'Redes y Telecomunicaciones',
-    email: 'jgallegos@upjr.edu.mx',
-    phone: 'Unknown',
-    office: 'UD2 - Primer Piso',
-    imageAsset: 'assets/teacher_juanH.png',
-  ),
-  Contact(
-    id: '005',
-    name: 'Ing. Miguel Arreguin Juarez',
-    subject: 'Redes y Telecomunicaciones',
-    email: 'marreguin@upjr.edu.mx',
-    phone: 'Unknown',
-    office: 'UD2 - Primer Piso',
-    imageAsset: 'assets/teacher_migue.png',
-  ),
-];
 
 class ContactsScreen extends StatelessWidget {
   const ContactsScreen({super.key});
 
   @override
   Widget build(BuildContext context) {
+    final data = context.watch<PrivateDataProvider>();
+    final teachers = data.teachers;
     return GlassScaffold(
       forceDark: true,
       backgroundColor: const Color(0xFF1B2230),
@@ -84,7 +22,13 @@ class ContactsScreen extends StatelessWidget {
         backgroundColor: const Color(0xFF1B2230),
         foregroundColor: Colors.white,
       ),
-      body: ListView.builder(
+      body: teachers.isEmpty
+          ? Center(
+              child: data.loaded
+                  ? const Text('Aún no hay profesores registrados.', style: TextStyle(color: Colors.white70))
+                  : const CircularProgressIndicator(),
+            )
+          : ListView.builder(
         padding: centeredListPadding(context, horizontal: 0, top: 8, bottom: 24),
         itemCount: teachers.length,
         itemBuilder: (ctx, index) {
@@ -92,10 +36,7 @@ class ContactsScreen extends StatelessWidget {
           return GlassCard(
             margin: const EdgeInsets.symmetric(horizontal: 16, vertical: 8),
             child: ListTile(
-              leading: CircleAvatar(
-                backgroundImage: ResizeImage(AssetImage(teacher.imageAsset), width: 300),
-                backgroundColor: Colors.grey,
-              ),
+              leading: TeacherAvatar(teacher: teacher, radius: 20),
               title: Text(
                 teacher.name,
                 style: const TextStyle(color: Colors.white),
@@ -121,6 +62,32 @@ class ContactsScreen extends StatelessWidget {
           );
         },
       ),
+    );
+  }
+}
+
+/// Foto del profesor o, si no hay, sus iniciales.
+class TeacherAvatar extends StatelessWidget {
+  const TeacherAvatar({super.key, required this.teacher, this.radius = 20});
+  final Contact teacher;
+  final double radius;
+
+  @override
+  Widget build(BuildContext context) {
+    final initials = teacher.name
+        .split(' ')
+        .where((w) => w.isNotEmpty && !w.endsWith('.'))
+        .take(2)
+        .map((w) => w[0])
+        .join();
+    return CircleAvatar(
+      radius: radius,
+      backgroundColor: const Color(0xFF263042),
+      foregroundImage: teacher.imageAsset.isEmpty
+          ? null
+          : ResizeImage(AssetImage(teacher.imageAsset), width: (radius * 6).round()),
+      onForegroundImageError: teacher.imageAsset.isEmpty ? null : (_, __) {},
+      child: Text(initials, style: TextStyle(color: const Color(0xFFE8A33D), fontSize: radius * 0.7)),
     );
   }
 }

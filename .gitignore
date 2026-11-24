@@ -42,3 +42,6 @@ android/build/
 *.dill
 *.cache.dill.track.dill
 apk/
+
+# Datos privados para subir a Firestore (no van al repositorio)
+seed/

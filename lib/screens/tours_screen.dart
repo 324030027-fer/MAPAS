@@ -7,7 +7,8 @@ import '../models/tour.dart';
 import '../providers/auth_provider.dart';
 import '../providers/map_provider.dart';
 import '../widgets/empty_state.dart';
-import 'contacts_screen.dart';
+import '../providers/private_data_provider.dart';
+import 'contacts_screen.dart' show TeacherAvatar;
 import 'panorama_viewer.dart';
 import 'teacher_profile_screen.dart';
 import '../widgets/glass.dart';
@@ -20,6 +21,7 @@ class ToursScreen extends StatelessWidget {
   Widget build(BuildContext context) {
     final isDark = Theme.of(context).brightness == Brightness.dark;
     final canSeePrivate = context.watch<AuthProvider>().canSeePrivate;
+    final teachers = context.watch<PrivateDataProvider>().teachers;
 
     return GlassScaffold(
       backgroundColor: isDark ? AppColors.darkBg : AppColors.lightBg,
@@ -96,7 +98,7 @@ class ToursScreen extends StatelessWidget {
             ),
             SliverToBoxAdapter(child: _Lab360List()),
             // Profesores: solo comunidad UPJR.
-            if (canSeePrivate) ...[
+            if (canSeePrivate && teachers.isNotEmpty) ...[
             SliverToBoxAdapter(
               child: Padding(
                 padding: const EdgeInsets.fromLTRB(20, 24, 20, 8),
@@ -119,10 +121,7 @@ class ToursScreen extends StatelessWidget {
                     margin: const EdgeInsets.symmetric(horizontal: 20, vertical: 6),
                     radius: 18,
                     child: ListTile(
-                      leading: CircleAvatar(
-                        backgroundColor: AppColors.primary.withValues(alpha: 0.2),
-                        child: const Icon(Icons.person, color: AppColors.primary),
-                      ),
+                      leading: TeacherAvatar(teacher: teacher),
                       title: Text(
                         teacher.name,
                         style: TextStyle(

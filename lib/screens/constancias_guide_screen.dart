@@ -1,12 +1,15 @@
 import 'dart:io' show Directory, File, Platform, Process;
 
+import 'package:cloud_firestore/cloud_firestore.dart' show Timestamp;
 import 'package:flutter/foundation.dart' show kIsWeb;
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
+import 'package:provider/provider.dart';
 import 'package:share_plus/share_plus.dart';
 import 'package:url_launcher/url_launcher.dart';
 
 import '../core/theme/app_colors.dart';
+import '../providers/private_data_provider.dart';
 import '../widgets/glass.dart';
 import '../widgets/responsive.dart';
 
@@ -104,7 +107,7 @@ class _ConstanciasGuideScreenState extends State<ConstanciasGuideScreen> {
   }
 
   void _copyEmail() {
-    Clipboard.setData(const ClipboardData(text: ConstanciasGuideScreen.email));
+    Clipboard.setData(ClipboardData(text: _email));
     _snack('Correo copiado');
   }
 
@@ -139,24 +142,45 @@ class _ConstanciasGuideScreenState extends State<ConstanciasGuideScreen> {
     if (!_form.currentState!.validate()) return;
     final uri = Uri(
       scheme: 'mailto',
-      path: ConstanciasGuideScreen.email,
+      path: _email,
       // mailto necesita %20 en lugar de "+", por eso se arma a mano.
-      query: 'subject=${Uri.encodeComponent(ConstanciasGuideScreen.subject)}'
+      query: 'subject=${Uri.encodeComponent(_subject)}'
           '&body=${Uri.encodeComponent(_body())}',
     );
     await _open(uri);
   }
 
+  // Datos editables por los admins en Firestore (guides/constancias). Si aún
+  // no cargan o no existen, se usan los valores del PDF oficial 2026.
+  Map<String, dynamic> get _g => context.read<PrivateDataProvider>().guide('constancias') ?? const {};
+  String get _sitoUrl => _g['sitoUrl'] as String? ?? ConstanciasGuideScreen.sitoUrl;
+  String get _email => _g['email'] as String? ?? ConstanciasGuideScreen.email;
+  String get _subject => _g['subject'] as String? ?? ConstanciasGuideScreen.subject;
+  List<String> get _tipos => (_g['tipos'] as List?)?.cast<String>() ?? ConstanciasGuideScreen.tipos;
+  int get _cutoff => (_g['cutoffHour'] as num?)?.toInt() ?? 12;
+  String get _ready => _g['readyTime'] as String? ?? '13:30';
+
+  String? get _updatedLabel {
+    final ts = _g['updatedAt'];
+    final d = ts is Timestamp ? ts.toDate() : (ts is String ? DateTime.tryParse(ts) : null);
+    if (d == null) return null;
+    const meses = ['ene', 'feb', 'mar', 'abr', 'may', 'jun', 'jul', 'ago', 'sep', 'oct', 'nov', 'dic'];
+    return '${d.day} ${meses[d.month - 1]} ${d.year}';
+  }
+
+  String get _cutoffLabel => _cutoff == 12 ? 'mediodía' : 'las $_cutoff:00';
+
   /// Cuándo estaría lista si se envía ahora.
   String _deliveryNow() {
     final now = DateTime.now();
-    return now.hour < 12
-        ? 'Si lo envías ahora (antes de mediodía), tu constancia estará lista hoy después de las 13:30.'
-        : 'Si lo envías ahora (después de mediodía), tu constancia estará lista mañana.';
+    return now.hour < _cutoff
+        ? 'Si lo envías ahora (antes de $_cutoffLabel), tu constancia estará lista hoy después de las $_ready.'
+        : 'Si lo envías ahora (después de $_cutoffLabel), tu constancia estará lista mañana.';
   }
 
   @override
   Widget build(BuildContext context) {
+    context.watch<PrivateDataProvider>(); // se reconstruye si cambia la guía
     final isDark = Theme.of(context).brightness == Brightness.dark;
     final fg = isDark ? Colors.white : AppColors.textPrimaryLight;
     final fg2 = isDark ? Colors.white70 : AppColors.textSecondaryLight;
@@ -209,6 +233,12 @@ class _ConstanciasGuideScreenState extends State<ConstanciasGuideScreen> {
                 style: TextStyle(color: fg, fontSize: 20, fontWeight: FontWeight.bold)),
             const SizedBox(height: 4),
             p('Sigue estos pasos. Esta guía no guarda ningún dato.'),
+            if (_updatedLabel case final u?)
+              Padding(
+                padding: const EdgeInsets.only(top: 4),
+                child: Text('Información actualizada el $u por Control Escolar.',
+                    style: TextStyle(color: fg2, fontSize: 12, fontStyle: FontStyle.italic)),
+              ),
             const SizedBox(height: 12),
             OutlinedButton.icon(
               onPressed: _downloadGuide,
@@ -233,7 +263,7 @@ class _ConstanciasGuideScreenState extends State<ConstanciasGuideScreen> {
               p('Elige el banco de tu preferencia o paga en línea.'),
               const SizedBox(height: 8),
               FilledButton.icon(
-                onPressed: () => _open(Uri.parse(ConstanciasGuideScreen.sitoUrl)),
+                onPressed: () => _open(Uri.parse(_sitoUrl)),
                 icon: const Icon(Icons.open_in_new),
                 label: const Text('Abrir SITO y obtener mi referencia'),
               ),
@@ -256,12 +286,12 @@ class _ConstanciasGuideScreenState extends State<ConstanciasGuideScreen> {
               const SizedBox(height: 8),
               Row(children: [
                 Expanded(
-                  child: SelectableText(ConstanciasGuideScreen.email,
+                  child: SelectableText(_email,
                       style: const TextStyle(color: AppColors.accent, fontWeight: FontWeight.w600)),
                 ),
                 IconButton(tooltip: 'Copiar correo', icon: const Icon(Icons.copy, size: 18), onPressed: _copyEmail),
               ]),
-              Text('Asunto: ${ConstanciasGuideScreen.subject}', style: TextStyle(color: fg2, fontStyle: FontStyle.italic)),
+              Text('Asunto: $_subject', style: TextStyle(color: fg2, fontStyle: FontStyle.italic)),
               const SizedBox(height: 12),
               Form(
                 key: _form,
@@ -279,7 +309,7 @@ class _ConstanciasGuideScreenState extends State<ConstanciasGuideScreen> {
                     isExpanded: true,
                     decoration: deco('Tipo de constancia'),
                     items: [
-                      for (final t in ConstanciasGuideScreen.tipos) DropdownMenuItem(value: t, child: Text(t)),
+                      for (final t in _tipos) DropdownMenuItem(value: t, child: Text(t)),
                     ],
                     onChanged: (v) => setState(() => _tipo = v),
                     validator: (v) => v == null ? 'Elige un tipo' : null,
@@ -324,8 +354,8 @@ class _ConstanciasGuideScreenState extends State<ConstanciasGuideScreen> {
                 ]),
               ),
               const SizedBox(height: 8),
-              bullet('Pago enviado antes de mediodía: se entrega después de las 13:30.'),
-              bullet('Después de mediodía: se entrega al día siguiente.'),
+              bullet('Pago enviado antes de $_cutoffLabel: se entrega después de las $_ready.'),
+              bullet('Después de $_cutoffLabel: se entrega al día siguiente.'),
             ]),
           ],
         ),

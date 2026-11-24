@@ -1,6 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:url_launcher/url_launcher.dart'; // ← Agregar esta importación
-import 'contacts_screen.dart';
+import '../models/contact.dart';
+import 'contacts_screen.dart' show TeacherAvatar;
 import '../widgets/glass.dart';
 import '../widgets/responsive.dart';
 
@@ -39,11 +40,7 @@ class TeacherProfileScreen extends StatelessWidget {
         padding: centeredListPadding(context, horizontal: 24, top: 24, bottom: 24),
         child: Column(
           children: [
-            CircleAvatar(
-              radius: 60,
-              backgroundImage: ResizeImage(AssetImage(teacher.imageAsset), width: 300),
-              backgroundColor: Colors.grey[800],
-            ),
+            TeacherAvatar(teacher: teacher, radius: 60),
             const SizedBox(height: 16),
             Text(
               teacher.name,
@@ -71,8 +68,8 @@ class TeacherProfileScreen extends StatelessWidget {
             ),
             const SizedBox(height: 32),
             _infoRow(Icons.email, 'Correo', teacher.email),
-            _infoRow(Icons.phone, 'Teléfono', teacher.phone),
-            _infoRow(Icons.location_on, 'Oficina', teacher.office),
+            _infoRow(Icons.phone, 'Teléfono', teacher.phone.isEmpty ? 'No disponible' : teacher.phone),
+            _infoRow(Icons.location_on, 'Oficina', teacher.office.isEmpty ? 'No disponible' : teacher.office),
             const SizedBox(height: 24),
             OutlinedButton.icon(
               onPressed: () async {

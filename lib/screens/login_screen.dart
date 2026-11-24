@@ -262,6 +262,14 @@ class _LoginScreenState extends State<LoginScreen> {
                             ),
                           ),
                         ),
+                        const SizedBox(height: 10),
+                        // Aviso de privacidad (datos personales del invitado).
+                        const Text(
+                          'Tu nombre solo se usa para saludarte y se guarda únicamente en este '
+                          'dispositivo; no se envía a ningún servidor. Puedes borrarlo al cerrar sesión.',
+                          textAlign: TextAlign.center,
+                          style: TextStyle(color: Colors.white54, fontSize: 11, height: 1.4),
+                        ),
                       ],
                     ),
                   ),

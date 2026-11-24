@@ -1,80 +1,93 @@
-import 'dart:convert';
+import 'dart:async';
+
+import 'package:cloud_firestore/cloud_firestore.dart';
 import 'package:flutter/material.dart';
-import 'package:shared_preferences/shared_preferences.dart';
 import '../models/map_location.dart';
+
+/// Pines y edificios del mapa.
+///
+/// La base son los lugares por defecto escritos aquí (información pública,
+/// sirve también sin internet). Encima se aplican los cambios del admin
+/// guardados en Firestore (`map/{id}`), que llegan a todos en tiempo real:
+/// un documento reemplaza al lugar con ese id, agrega uno nuevo, o lo quita si
+/// trae `deleted: true`. Lectura pública; escritura solo admins (reglas).
 class MapProvider extends ChangeNotifier {
+  CollectionReference<Map<String, dynamic>> get _col => FirebaseFirestore.instance.collection('map');
+  StreamSubscription<QuerySnapshot<Map<String, dynamic>>>? _sub;
+
   List<MapLocation> _mapPoints = [];
   MapLocation? _selectedMapLocation;
 
   List<MapLocation> get mapPoints => _mapPoints;
   MapLocation? get selectedMapLocation => _selectedMapLocation;
 
-  MapProvider() {
-    _loadMapPoints();
+  /// [syncWithFirestore] en false deja solo los lugares por defecto (pruebas).
+  MapProvider({bool syncWithFirestore = true}) {
+    _mapPoints = _getDefaultMapPoints();
+    if (syncWithFirestore) _sub = _col.snapshots().listen(_apply, onError: (_) {});
   }
 
-  // ==================== PERSISTENCIA ====================
-  Future<void> _saveMapPoints() async {
-    final prefs = await SharedPreferences.getInstance();
-    final List<String> jsonList = _mapPoints.map((loc) => jsonEncode(loc.toJson())).toList();
-    await prefs.setStringList('mapPoints', jsonList);
-  }
-
-  Future<void> _loadMapPoints() async {
-    final prefs = await SharedPreferences.getInstance();
-    final List<String>? jsonList = prefs.getStringList('mapPoints');
-    if (jsonList != null && jsonList.isNotEmpty) {
-      _mapPoints = jsonList.map((jsonStr) => MapLocation.fromJson(jsonDecode(jsonStr))).toList();
-      // Agrega una sola vez los pines por defecto nuevos que el mapa guardado
-      // aún no conoce (sin volver a crear los que el admin borró después).
-      final known = (prefs.getStringList('knownDefaultIds') ?? _mapPoints.map((l) => l.id).toList()).toSet();
-      final ids = _mapPoints.map((l) => l.id).toSet();
-      final defaults = _getDefaultMapPoints();
-      final added = defaults.where((l) => !known.contains(l.id) && !ids.contains(l.id)).toList();
-      if (added.isNotEmpty) {
-        _mapPoints.addAll(added);
-        await _saveMapPoints();
-      }
-      await prefs.setStringList('knownDefaultIds', {...known, ...defaults.map((l) => l.id)}.toList());
-      // v3: se corrigió la posición de algunos pines nuevos (baños de UD1/UD2).
-      if ((prefs.getInt('mapDefaultsVersion') ?? 1) < 3) {
-        const moved = {'BANOS_RECTORIA', 'BANOS_LT', 'BANOS_UD1', 'BANOS_UD2', 'CANCHA_FUTBOL', 'ESTACIONAMIENTO_ALUMNOS'};
-        for (final d in defaults.where((d) => moved.contains(d.id))) {
-          final i = _mapPoints.indexWhere((l) => l.id == d.id);
-          if (i != -1) _mapPoints[i] = _mapPoints[i].copyWith(x: d.x, y: d.y);
+  void _apply(QuerySnapshot<Map<String, dynamic>> snap) {
+    final byId = {for (final l in _getDefaultMapPoints()) l.id: l};
+    for (final doc in snap.docs) {
+      final data = doc.data();
+      if (data['deleted'] == true) {
+        byId.remove(doc.id);
+      } else {
+        try {
+          byId[doc.id] = MapLocation.fromJson({...data, 'id': doc.id});
+        } catch (_) {
+          // Documento mal formado: se ignora y se queda el valor por defecto.
         }
-        await _saveMapPoints();
-        await prefs.setInt('mapDefaultsVersion', 3);
       }
-    } else {
-      await prefs.setStringList('knownDefaultIds', _getDefaultMapPoints().map((l) => l.id).toList());
-      _mapPoints = _getDefaultMapPoints();
-      await _saveMapPoints();
+    }
+    _mapPoints = byId.values.toList();
+    final sel = _selectedMapLocation;
+    if (sel != null) {
+      _selectedMapLocation = _mapPoints.where((l) => l.id == sel.id).firstOrNull;
     }
     notifyListeners();
   }
 
-  // CRUD
+  /// Guarda el lugar en Firestore sin encargados ni correos: eso es privado
+  /// y vive en `labStaff`.
+  Future<void> _write(MapLocation loc) {
+    final json = loc.toJson();
+    for (final career in (json['careers'] as List? ?? [])) {
+      for (final lab in ((career as Map)['labs'] as List? ?? [])) {
+        (lab as Map)['inCharge'] = '';
+        lab['contact'] = '';
+      }
+    }
+    return _col.doc(loc.id).set({...json, 'updatedAt': FieldValue.serverTimestamp()});
+  }
+
+  // CRUD (solo admins: las reglas rechazan a los demás)
   void addMapPoint(MapLocation location) {
     _mapPoints.add(location);
-    _saveMapPoints();
     notifyListeners();
+    _write(location);
   }
 
   void updateMapPoint(MapLocation location) {
     final index = _mapPoints.indexWhere((l) => l.id == location.id);
-    if (index != -1) {
-      _mapPoints[index] = location;
-      _saveMapPoints();
-      notifyListeners();
-    }
+    if (index == -1) return;
+    _mapPoints[index] = location;
+    notifyListeners();
+    _write(location);
   }
 
   void removeMapPoint(String id) {
     _mapPoints.removeWhere((l) => l.id == id);
     if (_selectedMapLocation?.id == id) _selectedMapLocation = null;
-    _saveMapPoints();
     notifyListeners();
+    _col.doc(id).set({'deleted': true, 'updatedAt': FieldValue.serverTimestamp()});
+  }
+
+  @override
+  void dispose() {
+    _sub?.cancel();
+    super.dispose();
   }
 
   void selectMapLocation(MapLocation? location) {
@@ -126,8 +139,8 @@ class MapProvider extends ChangeNotifier {
               LabInfo(
                 name: "LAB. DE TECNOLOGÍAS MÓVILES",
                 description: "Laboratorio equipado para el desarrollo de aplicaciones móviles y telecomunicaciones.",
-                inCharge: "Ing. Miguel Arreguin Juárez",
-                contact: "marreguin@upjr.edu.mx",
+                inCharge: "",
+                contact: "",
                 imageThumbnail: "assets/moviles.jpg", // miniatura
                 asset360: "assets/moviles.jpg",       // imagen 360
               ),
@@ -169,24 +182,24 @@ class MapProvider extends ChangeNotifier {
               LabInfo(
                 name: "LAB. DE REDES",
                 description: "Configuración de dispositivos de red, routing y switching.",
-                inCharge: "Ing. Erick Fernando Montecillo Olivares",
-                contact: "emontecillo@upjr.edu.mx",
+                inCharge: "",
+                contact: "",
                 imageThumbnail: "assets/redes.jpg",
                 asset360: null,
               ),
               LabInfo(
                 name: "LAB. DE ELECTRÓNICA",
                 description: "Equipado con osciloscopios y estaciones de soldadura.",
-                inCharge: "Ing. Erick Fernando Montecillo Olivares",
-                contact: "emontecillo@upjr.edu.mx",
+                inCharge: "",
+                contact: "",
                 imageThumbnail: "assets/pano_electronica.jpg",
                 asset360: "assets/pano_electronica.jpg",
               ),
               LabInfo(
                 name: "LAB. DE TELEMÁTICA",
                 description: "Laboratorio con 28 estaciones de trabajo.",
-                inCharge: "Ing. Erick Fernando Montecillo Olivares",
-                contact: "emontecillo@upjr.edu.mx",
+                inCharge: "",
+                contact: "",
                 imageThumbnail: "assets/pano_telematica.jpg",
                 asset360: "assets/pano_telematica.jpg",
               ),

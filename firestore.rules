@@ -34,6 +34,16 @@ service cloud.firestore {
       allow read: if isUpjr();
       allow write: if isAdmin();
     }
+    // Encargados y correos de laboratorio.
+    match /labStaff/{doc=**} {
+      allow read: if isUpjr();
+      allow write: if isAdmin();
+    }
+    // Guías de trámites (constancias, etc.).
+    match /guides/{doc=**} {
+      allow read: if isUpjr();
+      allow write: if isAdmin();
+    }
 
     // Contenido del mapa editable por admins (lectura pública).
     match /map/{doc=**} {

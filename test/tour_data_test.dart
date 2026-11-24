@@ -1,12 +1,11 @@
+import 'dart:convert';
 import 'dart:io';
 import 'dart:typed_data';
 
 import 'package:flutter_test/flutter_test.dart';
-import 'package:nullcore_maps/data/default_schedules.dart';
 import 'package:nullcore_maps/data/tours/tours.dart';
 import 'package:nullcore_maps/models/tour.dart';
 import 'package:nullcore_maps/providers/map_provider.dart';
-import 'package:shared_preferences/shared_preferences.dart';
 
 /// Medidas (ancho, alto) de un JPG o PNG leyendo solo su encabezado.
 ({int w, int h})? _imageSize(String path) {
@@ -67,9 +66,13 @@ void main() {
       });
 
       test('sus laboratorios tienen ficha y horarios', () async {
-        SharedPreferences.setMockInitialValues({});
-        final map = MapProvider();
-        await Future<void>.delayed(const Duration(milliseconds: 200));
+        final map = MapProvider(syncWithFirestore: false);
+        // Los horarios viven en Firestore; si existe la copia local
+        // seed/seed.json (no está en git) también se revisan.
+        final seedFile = File('seed/seed.json');
+        final seed = seedFile.existsSync()
+            ? jsonDecode(seedFile.readAsStringSync()) as Map<String, dynamic>
+            : null;
         for (final entry in tour.labs.entries) {
           final ref = entry.value;
           expect(
@@ -77,11 +80,12 @@ void main() {
             isNotNull,
             reason: 'Falta la ficha "${ref.labName}" en ${ref.locationId} (MapProvider)',
           );
-          final schedules = DefaultSchedules.all[ref.locationId] ?? const [];
+          if (seed == null) continue;
+          final labs = (seed['schedules'][ref.locationId]?['labs'] as List?) ?? const [];
           expect(
-            schedules.any((s) => s.labName == ref.scheduleName),
+            labs.any((l) => l['labName'] == ref.scheduleName),
             isTrue,
-            reason: 'Faltan horarios "${ref.scheduleName}" en ${ref.locationId} (DefaultSchedules)',
+            reason: 'Faltan horarios "${ref.scheduleName}" en ${ref.locationId} (seed/seed.json)',
           );
         }
       });
