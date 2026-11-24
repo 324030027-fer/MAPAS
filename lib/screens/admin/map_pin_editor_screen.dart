@@ -20,6 +20,9 @@ class MapPinEditorScreen extends StatefulWidget {
 class _MapPinEditorScreenState extends State<MapPinEditorScreen> {
   final TransformationController _transformer = TransformationController();
   MapLocation? _selected;
+  /// Posiciones movidas que aún no se guardan (id → x,y). Nada se sube a
+  /// Firestore hasta presionar "Guardar".
+  final Map<String, Offset> _pending = {};
   double _mapWidth = 1;
   double _mapHeight = 1;
 
@@ -29,23 +32,70 @@ class _MapPinEditorScreenState extends State<MapPinEditorScreen> {
     super.dispose();
   }
 
+  /// Lugar con su posición pendiente (si se movió) aplicada.
+  MapLocation _withPending(MapLocation loc) {
+    final p = _pending[loc.id];
+    return p == null ? loc : loc.copyWith(x: p.dx, y: p.dy);
+  }
+
   void _updatePosition(MapLocation loc, Offset delta) {
-    final provider = context.read<MapProvider>();
-    final newX = (loc.x + delta.dx / _mapWidth).clamp(0.02, 0.98);
-    final newY = (loc.y + delta.dy / _mapHeight).clamp(0.02, 0.98);
-    provider.updateMapPoint(loc.copyWith(x: newX, y: newY));
-    setState(() => _selected = loc.copyWith(x: newX, y: newY));
+    final cur = _withPending(loc);
+    final newX = (cur.x + delta.dx / _mapWidth).clamp(0.02, 0.98);
+    final newY = (cur.y + delta.dy / _mapHeight).clamp(0.02, 0.98);
+    setState(() => _pending[loc.id] = Offset(newX, newY));
   }
 
   void _placeAtTap(Offset local, MapProvider provider) {
     if (_selected == null) return;
     final x = (local.dx / _mapWidth).clamp(0.02, 0.98);
     final y = (local.dy / _mapHeight).clamp(0.02, 0.98);
-    final updated = _selected!.copyWith(x: x, y: y);
-    provider.updateMapPoint(updated);
-    setState(() => _selected = updated);
+    setState(() => _pending[_selected!.id] = Offset(x, y));
+  }
+
+  void _save(MapProvider provider) {
+    final n = _pending.length;
+    for (final loc in provider.mapPoints) {
+      if (_pending.containsKey(loc.id)) provider.updateMapPoint(_withPending(loc));
+    }
+    setState(_pending.clear);
     ScaffoldMessenger.of(context).showSnackBar(
-      const SnackBar(content: Text('Posición actualizada'), duration: Duration(seconds: 1)),
+      SnackBar(content: Text(n == 1 ? '1 posición guardada' : '$n posiciones guardadas')),
+    );
+  }
+
+  void _discard() => setState(_pending.clear);
+
+  /// Barra de cambios sin guardar.
+  Widget _saveBar(MapProvider provider) {
+    final n = _pending.length;
+    return Container(
+      padding: const EdgeInsets.fromLTRB(16, 12, 12, 12),
+      color: n == 0 ? AppColors.darkSurface : AppColors.primary.withValues(alpha: 0.18),
+      child: Column(
+        crossAxisAlignment: CrossAxisAlignment.stretch,
+        children: [
+          Text(
+            n == 0 ? 'Sin cambios' : (n == 1 ? '1 cambio sin guardar' : '$n cambios sin guardar'),
+            style: TextStyle(color: n == 0 ? Colors.white54 : AppColors.highlight, fontSize: 12.5, fontWeight: FontWeight.w600),
+          ),
+          const SizedBox(height: 8),
+          Row(
+            children: [
+              Expanded(
+                child: OutlinedButton(onPressed: n == 0 ? null : _discard, child: const Text('Descartar')),
+              ),
+              const SizedBox(width: 8),
+              Expanded(
+                child: FilledButton.icon(
+                  onPressed: n == 0 ? null : () => _save(provider),
+                  icon: const Icon(Icons.save, size: 18),
+                  label: const Text('Guardar'),
+                ),
+              ),
+            ],
+          ),
+        ],
+      ),
     );
   }
 
@@ -64,15 +114,18 @@ class _MapPinEditorScreenState extends State<MapPinEditorScreen> {
                 padding: const EdgeInsets.all(16),
                 color: AppColors.darkSurface,
                 child: const Text(
-                  'Selecciona un punto y arrastra el pin, o toca el mapa para colocarlo.',
+                  'Selecciona un punto y arrastra el pin, o toca el mapa para colocarlo. '
+                  'Los cambios se suben hasta que presiones Guardar.',
                   style: TextStyle(color: AppColors.textSecondaryDark, fontSize: 12, height: 1.4),
                 ),
               ),
+              _saveBar(provider),
               Expanded(
                 child: ListView.builder(
                   itemCount: provider.mapPoints.length,
                   itemBuilder: (context, index) {
-                    final loc = provider.mapPoints[index];
+                    final loc = _withPending(provider.mapPoints[index]);
+                    final moved = _pending.containsKey(loc.id);
                     final isSelected = _selected?.id == loc.id;
                     return ListTile(
                       selected: isSelected,
@@ -80,8 +133,8 @@ class _MapPinEditorScreenState extends State<MapPinEditorScreen> {
                       leading: Icon(loc.icon, color: isSelected ? AppColors.highlight : AppColors.accent),
                       title: Text(loc.title, style: const TextStyle(color: Colors.white, fontSize: 13)),
                       subtitle: Text(
-                        'X:${loc.x.toStringAsFixed(2)} Y:${loc.y.toStringAsFixed(2)}',
-                        style: const TextStyle(color: Colors.white54, fontSize: 11),
+                        'X:${loc.x.toStringAsFixed(2)} Y:${loc.y.toStringAsFixed(2)}${moved ? '  · sin guardar' : ''}',
+                        style: TextStyle(color: moved ? AppColors.highlight : Colors.white54, fontSize: 11),
                       ),
                       onTap: () => setState(() => _selected = loc),
                     );
@@ -119,7 +172,7 @@ class _MapPinEditorScreenState extends State<MapPinEditorScreen> {
                               ),
                             ),
                           ),
-                          ...provider.mapPoints.map((loc) {
+                          ...provider.mapPoints.map(_withPending).map((loc) {
                             final isSelected = _selected?.id == loc.id;
                             return Positioned(
                               left: (loc.x * _mapWidth) - 22,
@@ -149,7 +202,7 @@ class _MapPinEditorScreenState extends State<MapPinEditorScreen> {
     );
 
     if (widget.embedded) {
-      return ColoredBox(color: AppColors.darkBg, child: body);
+      return Material(color: AppColors.darkBg, child: body);
     }
 
     return GlassScaffold(

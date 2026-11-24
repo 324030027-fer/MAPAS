@@ -58,19 +58,35 @@ class CareerInfo {
 
 /// Resuelve el ícono por codePoint contra constantes conocidas, para que el
 /// tree-shaking de íconos funcione en release (sin IconData dinámicos).
+/// Íconos disponibles para los lugares del mapa (nombre visible → ícono).
+/// Se guardan por codePoint; al leer se buscan aquí (deben ser constantes
+/// para que Flutter conserve la fuente de íconos).
+const Map<String, IconData> kLocationIcons = {
+  'Lugar': Icons.place,
+  'Edificio': Icons.apartment,
+  'Administración': Icons.account_balance,
+  'Biblioteca': Icons.local_library,
+  'Aula': Icons.class_outlined,
+  'Docencia': Icons.school,
+  'Laboratorio': Icons.science,
+  'Cómputo': Icons.computer,
+  'Cafetería': Icons.restaurant,
+  'Café': Icons.local_cafe,
+  'Baños': Icons.wc,
+  'Estacionamiento': Icons.local_parking,
+  'Basquetbol': Icons.sports_basketball,
+  'Futbol': Icons.sports_soccer,
+  'Deportes': Icons.fitness_center,
+  'Auditorio': Icons.theater_comedy,
+  'Enfermería': Icons.local_hospital,
+  'Información': Icons.info_outline,
+  'Entrada': Icons.door_front_door,
+  'Parada': Icons.directions_bus,
+};
+
 IconData _iconFromCodePoint(int? codePoint) {
   if (codePoint == null) return Icons.place;
-  const icons = [
-    Icons.account_balance,
-    Icons.local_library,
-    Icons.class_outlined,
-    Icons.school,
-    Icons.restaurant,
-    Icons.sports_basketball,
-    Icons.science,
-    Icons.place,
-  ];
-  for (final icon in icons) {
+  for (final icon in kLocationIcons.values) {
     if (icon.codePoint == codePoint) return icon;
   }
   return Icons.place;

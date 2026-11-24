@@ -15,6 +15,7 @@ class MapProvider extends ChangeNotifier {
   CollectionReference<Map<String, dynamic>> get _col => FirebaseFirestore.instance.collection('map');
   StreamSubscription<QuerySnapshot<Map<String, dynamic>>>? _sub;
 
+  final bool _sync;
   List<MapLocation> _mapPoints = [];
   MapLocation? _selectedMapLocation;
 
@@ -22,7 +23,7 @@ class MapProvider extends ChangeNotifier {
   MapLocation? get selectedMapLocation => _selectedMapLocation;
 
   /// [syncWithFirestore] en false deja solo los lugares por defecto (pruebas).
-  MapProvider({bool syncWithFirestore = true}) {
+  MapProvider({bool syncWithFirestore = true}) : _sync = syncWithFirestore {
     _mapPoints = _getDefaultMapPoints();
     if (syncWithFirestore) _sub = _col.snapshots().listen(_apply, onError: (_) {});
   }
@@ -51,7 +52,8 @@ class MapProvider extends ChangeNotifier {
 
   /// Guarda el lugar en Firestore sin encargados ni correos: eso es privado
   /// y vive en `labStaff`.
-  Future<void> _write(MapLocation loc) {
+  Future<void> _write(MapLocation loc) async {
+    if (!_sync) return;
     final json = loc.toJson();
     for (final career in (json['careers'] as List? ?? [])) {
       for (final lab in ((career as Map)['labs'] as List? ?? [])) {
@@ -59,7 +61,7 @@ class MapProvider extends ChangeNotifier {
         lab['contact'] = '';
       }
     }
-    return _col.doc(loc.id).set({...json, 'updatedAt': FieldValue.serverTimestamp()});
+    await _col.doc(loc.id).set({...json, 'updatedAt': FieldValue.serverTimestamp()});
   }
 
   // CRUD (solo admins: las reglas rechazan a los demás)
@@ -81,7 +83,7 @@ class MapProvider extends ChangeNotifier {
     _mapPoints.removeWhere((l) => l.id == id);
     if (_selectedMapLocation?.id == id) _selectedMapLocation = null;
     notifyListeners();
-    _col.doc(id).set({'deleted': true, 'updatedAt': FieldValue.serverTimestamp()});
+    if (_sync) _col.doc(id).set({'deleted': true, 'updatedAt': FieldValue.serverTimestamp()});
   }
 
   @override

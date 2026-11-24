@@ -8,6 +8,7 @@ import '../../providers/map_provider.dart';
 import '../../providers/schedule_provider.dart';
 import 'admin_hub_screen.dart';
 import 'location_editor.dart';
+import 'new_location_screen.dart';
 import '../../widgets/glass.dart';
 import '../../widgets/responsive.dart';
 
@@ -91,7 +92,7 @@ class AdminDashboard extends StatelessWidget {
               child: SizedBox(
                 width: double.infinity,
                 child: FilledButton.icon(
-                  onPressed: () => _showAddLocationDialog(context, provider),
+                  onPressed: () => _openNewLocation(context),
                   icon: const Icon(Icons.add_location_alt),
                   label: const Text('Nueva ubicación'),
                   style: FilledButton.styleFrom(backgroundColor: AppColors.highlight),
@@ -109,7 +110,7 @@ class AdminDashboard extends StatelessWidget {
       backgroundColor: AppColors.darkBg,
       body: list,
       floatingActionButton: FloatingActionButton.extended(
-        onPressed: () => _showAddLocationDialog(context, provider),
+        onPressed: () => _openNewLocation(context),
         label: const Text('Nueva ubicación'),
         icon: const Icon(Icons.add_location_alt),
         backgroundColor: AppColors.highlight,
@@ -146,65 +147,7 @@ class AdminDashboard extends StatelessWidget {
     );
   }
 
-  void _showAddLocationDialog(BuildContext context, MapProvider provider) {
-    final idController = TextEditingController();
-    final titleController = TextEditingController();
-    final descController = TextEditingController();
-    final catController = TextEditingController();
-    final xController = TextEditingController(text: '0.5');
-    final yController = TextEditingController(text: '0.5');
-
-    showDialog(
-      context: context,
-      builder: (ctx) => AlertDialog(
-        backgroundColor: AppColors.darkSurface,
-        title: const Text('Nueva ubicación', style: TextStyle(color: Colors.white)),
-        content: SingleChildScrollView(
-          child: Column(
-            mainAxisSize: MainAxisSize.min,
-            children: [
-              _field(idController, 'ID (único)'),
-              _field(titleController, 'Título'),
-              _field(descController, 'Descripción'),
-              _field(catController, 'Categoría'),
-              _field(xController, 'Coordenada X (0-1)', number: true),
-              _field(yController, 'Coordenada Y (0-1)', number: true),
-            ],
-          ),
-        ),
-        actions: [
-          TextButton(onPressed: () => Navigator.pop(ctx), child: const Text('Cancelar')),
-          FilledButton(
-            onPressed: () {
-              final id = idController.text.trim();
-              if (id.isEmpty) return;
-              provider.addMapPoint(MapLocation(
-                id: id,
-                title: titleController.text.trim(),
-                description: descController.text.trim(),
-                category: catController.text.trim(),
-                x: double.tryParse(xController.text.trim()) ?? 0.5,
-                y: double.tryParse(yController.text.trim()) ?? 0.5,
-                assetImage360: '',
-              ));
-              Navigator.pop(ctx);
-            },
-            child: const Text('Crear'),
-          ),
-        ],
-      ),
-    );
-  }
-
-  Widget _field(TextEditingController c, String label, {bool number = false}) {
-    return Padding(
-      padding: const EdgeInsets.only(bottom: 8),
-      child: TextField(
-        controller: c,
-        keyboardType: number ? TextInputType.number : null,
-        style: const TextStyle(color: Colors.white),
-        decoration: InputDecoration(labelText: label, labelStyle: const TextStyle(color: Colors.white70)),
-      ),
-    );
+  void _openNewLocation(BuildContext context) {
+    Navigator.push(context, MaterialPageRoute(builder: (_) => const NewLocationScreen()));
   }
 }
