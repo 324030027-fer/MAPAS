@@ -2,12 +2,12 @@ import 'package:flutter/material.dart';
 import 'package:panorama/panorama.dart';
 import 'package:provider/provider.dart';
 import '../core/utils/tour_utils.dart';
-import '../models/lab_schedule.dart';
 import '../models/map_location.dart';
+import '../models/room.dart';
 import '../models/tour.dart';
 import '../providers/map_provider.dart';
-import '../providers/schedule_provider.dart';
 import '../widgets/lab_tour_widgets.dart';
+import '../widgets/room_picker.dart';
 import '../widgets/tour_arrow.dart';
 
 /// Dónde se muestra la ventana de información del laboratorio:
@@ -23,8 +23,15 @@ class PanoramaViewer extends StatefulWidget {
   /// Parada donde empieza; por defecto la inicial del recorrido.
   final String? startId;
 
-  const PanoramaViewer({super.key, required this.tour, this.startId});
-  
+  /// Rumbo inicial (grados) cuando no se llega por un tramo del recorrido.
+  final double? initialYaw;
+
+  /// Salón que se está viendo (acceso directo): muestra la barra para pasar
+  /// al anterior/siguiente o elegir otro sin salir del visor.
+  final Room? room;
+
+  const PanoramaViewer({super.key, required this.tour, this.startId, this.initialYaw, this.room});
+
   @override
   State<PanoramaViewer> createState() => _PanoramaViewerState();
 }
@@ -53,6 +60,7 @@ class _PanoramaViewerState extends State<PanoramaViewer> {
     _labPanelOpen = _labs.containsKey(currentLocation.id);
     final firstLab = _labs[currentLocation.id];
     if (firstLab != null) _longitude = firstLab.wallYaw;
+    if (widget.initialYaw != null) _longitude = widget.initialYaw!;
     _fresh(currentLocation).then((_) {
       if (mounted) setState(() => _ready = true);
     });
@@ -101,16 +109,8 @@ class _PanoramaViewerState extends State<PanoramaViewer> {
     return Provider.of<MapProvider>(context, listen: false).findLabInfo(ref.locationId, ref.labName);
   }
 
-  /// Horarios del laboratorio de una ubicación del recorrido.
-  List<LabSchedule> _labSchedulesFor(String tourId, ScheduleProvider schedules) {
-    final ref = _labs[tourId];
-    if (ref == null) return const [];
-    return schedules.getSchedulesForLocation(ref.locationId).where((s) => s.labName == ref.scheduleName).toList();
-  }
-
   @override
   Widget build(BuildContext context) {
-    final schedules = context.watch<ScheduleProvider>();
     final labHere = _labInfoFor(currentLocation.id);
     // Panel anclado a la pared del laboratorio.
     final labRefHere = _labs[currentLocation.id];
@@ -120,10 +120,9 @@ class _PanoramaViewerState extends State<PanoramaViewer> {
           latitude: labRefHere.wallPitch,
           longitude: labRefHere.wallYaw,
           width: 310,
-          height: 430,
+          height: 340,
           widget: LabDetailPanel(
             lab: labHere,
-            schedules: _labSchedulesFor(currentLocation.id, schedules),
             blur: 0,
           ),
         ),
@@ -205,10 +204,21 @@ class _PanoramaViewerState extends State<PanoramaViewer> {
                   child: Center(
                     child: LabDetailPanel(
                       lab: labHere,
-                      schedules: _labSchedulesFor(currentLocation.id, schedules),
                       onClose: () => setState(() => _labPanelOpen = false),
                     ),
                   ),
+                ),
+              ),
+            ),
+          if (widget.room != null && labHere == null)
+            Positioned(
+              left: 0,
+              right: 0,
+              bottom: 0,
+              child: SafeArea(
+                child: Padding(
+                  padding: const EdgeInsets.only(bottom: 20),
+                  child: Center(child: RoomSwitcherBar(room: widget.room!)),
                 ),
               ),
             ),

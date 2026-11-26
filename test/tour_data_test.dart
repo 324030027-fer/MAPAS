@@ -1,4 +1,3 @@
-import 'dart:convert';
 import 'dart:io';
 import 'dart:typed_data';
 
@@ -65,27 +64,13 @@ void main() {
         }
       });
 
-      test('sus laboratorios tienen ficha y horarios', () async {
+      test('sus laboratorios tienen ficha', () {
         final map = MapProvider(syncWithFirestore: false);
-        // Los horarios viven en Firestore; si existe la copia local
-        // seed/seed.json (no está en git) también se revisan.
-        final seedFile = File('seed/seed.json');
-        final seed = seedFile.existsSync()
-            ? jsonDecode(seedFile.readAsStringSync()) as Map<String, dynamic>
-            : null;
-        for (final entry in tour.labs.entries) {
-          final ref = entry.value;
+        for (final ref in tour.labs.values) {
           expect(
             map.findLabInfo(ref.locationId, ref.labName),
             isNotNull,
             reason: 'Falta la ficha "${ref.labName}" en ${ref.locationId} (MapProvider)',
-          );
-          if (seed == null) continue;
-          final labs = (seed['schedules'][ref.locationId]?['labs'] as List?) ?? const [];
-          expect(
-            labs.any((l) => l['labName'] == ref.scheduleName),
-            isTrue,
-            reason: 'Faltan horarios "${ref.scheduleName}" en ${ref.locationId} (seed/seed.json)',
           );
         }
       });

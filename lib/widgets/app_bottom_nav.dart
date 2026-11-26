@@ -18,11 +18,12 @@ class AppBottomNav extends StatelessWidget {
   static const _items = [
     (Icons.map_rounded, 'Mapa'),
     (Icons.vrpano_rounded, 'Recorridos'),
+    (Icons.calendar_month_rounded, 'Escolar'),
     (Icons.apps_rounded, 'Más'),
   ];
 
   static const double _height = 66;
-  static const double _maxWidth = 320;
+  static const double _maxWidth = 400;
   static const double _inset = 6;
 
   @override

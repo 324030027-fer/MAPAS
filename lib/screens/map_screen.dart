@@ -5,13 +5,12 @@ import 'package:go_router/go_router.dart';
 import 'package:provider/provider.dart';
 
 import '../core/theme/app_colors.dart';
-import '../core/utils/schedule_utils.dart';
 import '../data/building_outlines.dart';
 import '../data/floor_plans.dart';
+import '../data/rooms.dart';
 import '../models/map_location.dart';
 import '../providers/auth_provider.dart';
 import '../providers/map_provider.dart';
-import '../providers/schedule_provider.dart';
 import '../widgets/admin_badge.dart';
 import '../widgets/building_outline_painter.dart';
 import '../widgets/glass.dart';
@@ -19,6 +18,7 @@ import '../widgets/grid_painter.dart';
 import '../widgets/map_onboarding_overlay.dart';
 import '../widgets/map_widgets.dart';
 import '../widgets/responsive.dart';
+import '../widgets/room_picker.dart';
 
 class MapScreen extends StatefulWidget {
   const MapScreen({super.key});
@@ -356,12 +356,9 @@ class _MapScreenState extends State<MapScreen> with TickerProviderStateMixin {
   Widget build(BuildContext context) {
     final mapProvider = context.watch<MapProvider>();
     final auth = context.watch<AuthProvider>();
-    final scheduleProvider = context.watch<ScheduleProvider>();
     final visible = _visiblePoints(mapProvider);
     final isDark = Theme.of(context).brightness == Brightness.dark;
     final bg = isDark ? AppColors.darkBg : AppColors.lightBg;
-
-    final nowInLt = entriesHappeningNow(scheduleProvider.getSchedulesForLocation('LT_MAP'));
 
     final hoverCard = _buildHoverCard(mapProvider, context);
 
@@ -693,7 +690,7 @@ class _MapScreenState extends State<MapScreen> with TickerProviderStateMixin {
                   onChanged: (v) => setState(() => _searchQuery = v.trim()),
                   style: TextStyle(color: isDark ? Colors.white : AppColors.textPrimaryLight),
                   decoration: InputDecoration(
-                    hintText: 'Buscar edificio o categoría…',
+                    hintText: 'Buscar edificio, salón o categoría…',
                     hintStyle: TextStyle(color: isDark ? Colors.white54 : AppColors.textSecondaryLight),
                     prefixIcon: const Icon(Icons.search, color: AppColors.accent),
                     suffixIcon: _searchQuery.isNotEmpty
@@ -744,6 +741,17 @@ class _MapScreenState extends State<MapScreen> with TickerProviderStateMixin {
                       );
                     }).toList(),
                 ),
+                // Salones que coinciden con la búsqueda ("salón 7", "ud2 7").
+                if (_searchQuery.isNotEmpty && searchRooms(_searchQuery).isNotEmpty) ...[
+                  const SizedBox(height: 10),
+                  GlassContainer(
+                    radius: 18,
+                    blur: 10,
+                    tintStrength: wide ? 1 : 1.6,
+                    padding: const EdgeInsets.fromLTRB(8, 12, 8, 8),
+                    child: RoomSearchResults(query: _searchQuery, max: wide ? 5 : 3),
+                  ),
+                ],
                 // PC: lista de lugares bajo los filtros.
                 if (wide) ...[
                   const SizedBox(height: 18),
@@ -763,62 +771,6 @@ class _MapScreenState extends State<MapScreen> with TickerProviderStateMixin {
             ),
           ),
         ),
-
-        // Clases ahora en LT
-        if (auth.canSeePrivate && nowInLt.isNotEmpty && mapProvider.selectedMapLocation == null && _focusId == null)
-          Positioned(
-            left: barLeft,
-            right: barRight,
-            bottom: 100,
-            child: GlassContainer(
-              radius: 20,
-              blur: 12,
-              child: InkWell(
-                onTap: () {
-                  final lt = mapProvider.mapPoints.firstWhere((l) => l.id == 'LT_MAP');
-                  mapProvider.selectMapLocation(lt);
-                },
-                borderRadius: BorderRadius.circular(20),
-                child: Padding(
-                  padding: const EdgeInsets.all(14),
-                  child: Row(
-                    children: [
-                      Container(
-                        padding: const EdgeInsets.all(10),
-                        decoration: BoxDecoration(
-                          color: AppColors.highlight.withValues(alpha: 0.2),
-                          shape: BoxShape.circle,
-                        ),
-                        child: const Icon(Icons.schedule, color: AppColors.highlight, size: 22),
-                      ),
-                      const SizedBox(width: 12),
-                      Expanded(
-                        child: Column(
-                          crossAxisAlignment: CrossAxisAlignment.start,
-                          children: [
-                            const Text(
-                              'En curso en LT',
-                              style: TextStyle(color: AppColors.highlight, fontWeight: FontWeight.bold, fontSize: 12),
-                            ),
-                            Text(
-                              nowInLt.first.subject,
-                              maxLines: 1,
-                              overflow: TextOverflow.ellipsis,
-                              style: TextStyle(
-                                color: isDark ? Colors.white : AppColors.textPrimaryLight,
-                                fontWeight: FontWeight.w600,
-                              ),
-                            ),
-                          ],
-                        ),
-                      ),
-                      Icon(Icons.chevron_right, color: isDark ? Colors.white54 : Colors.black45),
-                    ],
-                  ),
-                ),
-              ),
-            ),
-          ),
 
         if (auth.showAdminTools && mapProvider.selectedMapLocation == null)
           Positioned(
@@ -912,7 +864,7 @@ class _MapScreenState extends State<MapScreen> with TickerProviderStateMixin {
                       ),
                       TextButton(
                         onPressed: () => mapProvider.selectMapLocation(b),
-                        child: const Text('Ver información'),
+                        child: Text(roomsOf(b.id).isNotEmpty ? 'Ver salones' : 'Ver información'),
                       ),
                       IconButton(
                         tooltip: 'Salir del edificio',

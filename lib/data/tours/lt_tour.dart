@@ -53,7 +53,6 @@ final Tour ltTour = Tour(
     'LT': TourLabRef(
       locationId: 'LT_MAP',
       labName: 'LAB. DE TELEMÁTICA',
-      scheduleName: 'Telemática',
       // Pared lisa del fondo del salón (≈131° a ≈234° en el panorama).
       wallYaw: 180,
       wallPitch: 6,
@@ -61,7 +60,6 @@ final Tour ltTour = Tour(
     'LE': TourLabRef(
       locationId: 'LT_MAP',
       labName: 'LAB. DE ELECTRÓNICA',
-      scheduleName: 'Electrónica',
       // Pared con ventanas del lado derecho del salón (≈ 72° a 150°).
       wallYaw: 110,
       wallPitch: 8,

@@ -4,10 +4,8 @@ import 'package:provider/provider.dart';
 
 import '../../core/theme/app_colors.dart';
 import '../../providers/auth_provider.dart';
-import '../../providers/schedule_provider.dart';
 import 'admin_dashboard.dart';
 import 'map_pin_editor_screen.dart';
-import 'schedule_admin_screen.dart';
 import '../../widgets/glass.dart';
 
 class AdminHubScreen extends StatelessWidget {
@@ -22,7 +20,7 @@ class AdminHubScreen extends StatelessWidget {
     }
 
     return DefaultTabController(
-      length: 4,
+      length: 3,
       child: GlassScaffold(
       forceDark: true,
         backgroundColor: AppColors.darkBg,
@@ -35,7 +33,6 @@ class AdminHubScreen extends StatelessWidget {
             tabs: [
               Tab(icon: Icon(Icons.list_alt), text: 'Puntos'),
               Tab(icon: Icon(Icons.map), text: 'Mapa'),
-              Tab(icon: Icon(Icons.schedule), text: 'Horarios'),
               Tab(icon: Icon(Icons.visibility), text: 'Vista previa'),
             ],
           ),
@@ -44,7 +41,6 @@ class AdminHubScreen extends StatelessWidget {
           children: [
             AdminDashboard(embedded: true),
             MapPinEditorScreen(embedded: true),
-            ScheduleAdminScreen(embedded: true),
             _PreviewTab(),
           ],
         ),
@@ -96,31 +92,6 @@ class _PreviewTab extends StatelessWidget {
               child: const Text('Desactivar vista estudiante'),
             ),
           ],
-        ),
-      ),
-    );
-  }
-}
-
-/// Activa horarios en un edificio desde el panel de puntos.
-Future<void> enableSchedulesForLocation(
-  BuildContext context,
-  String locationId,
-  String locationTitle,
-) async {
-  final scheduleProvider = context.read<ScheduleProvider>();
-  await scheduleProvider.ensureLocationExists(locationId);
-  final existing = scheduleProvider.getSchedulesForLocation(locationId);
-  if (existing.isNotEmpty) return;
-
-  await scheduleProvider.addLab(locationId, 'Laboratorio — $locationTitle');
-  if (context.mounted) {
-    ScaffoldMessenger.of(context).showSnackBar(
-      SnackBar(
-        content: Text('Horarios activados para $locationTitle. Edítalos en la pestaña Horarios.'),
-        action: SnackBarAction(
-          label: 'Ir',
-          onPressed: () {},
         ),
       ),
     );

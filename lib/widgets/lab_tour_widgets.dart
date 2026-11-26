@@ -2,12 +2,9 @@ import 'package:flutter/material.dart';
 import 'package:provider/provider.dart';
 import 'package:url_launcher/url_launcher.dart';
 
-import '../core/schedule_constants.dart';
 import '../core/theme/app_colors.dart';
-import '../core/utils/schedule_utils.dart';
 import '../providers/auth_provider.dart';
 import '../providers/private_data_provider.dart';
-import '../models/lab_schedule.dart';
 import '../models/map_location.dart';
 import 'glass.dart';
 
@@ -217,13 +214,9 @@ class LabExitButton extends StatelessWidget {
 }
 
 /// Ventana flotante completa con la información detallada del laboratorio:
-/// foto de referencia, encargado y contacto, descripción y horarios por día
-/// (módulo, materia, grupo y profesor).
+/// foto de referencia, encargado y contacto, y descripción.
 class LabDetailPanel extends StatefulWidget {
   final LabInfo lab;
-
-  /// Horarios del laboratorio (puede estar vacío si aún no se capturan).
-  final List<LabSchedule> schedules;
 
   /// Si es null no se muestra el botón de cerrar (panel anclado a la pared).
   final VoidCallback? onClose;
@@ -235,7 +228,6 @@ class LabDetailPanel extends StatefulWidget {
   const LabDetailPanel({
     super.key,
     required this.lab,
-    required this.schedules,
     this.onClose,
     this.blur = 16,
   });
@@ -245,28 +237,6 @@ class LabDetailPanel extends StatefulWidget {
 }
 
 class _LabDetailPanelState extends State<LabDetailPanel> {
-  late String _day;
-
-  @override
-  void initState() {
-    super.initState();
-    final today = currentDayName();
-    _day = kWeekDays.contains(today) ? today : kWeekDays.first;
-  }
-
-  static int _minutes(String t) {
-    final p = t.split(':');
-    if (p.length < 2) return 0;
-    return (int.tryParse(p[0]) ?? 0) * 60 + (int.tryParse(p[1]) ?? 0);
-  }
-
-  /// Número de módulo (bloques de 50 min desde las 08:00), si el horario cuadra.
-  static String _module(String start) {
-    final m = _minutes(start) - 8 * 60;
-    if (m < 0 || m % 50 != 0) return '';
-    return 'Módulo ${m ~/ 50 + 1}';
-  }
-
   Future<void> _mail(String address) async {
     final uri = Uri(scheme: 'mailto', path: address);
     try {
@@ -283,10 +253,6 @@ class _LabDetailPanelState extends State<LabDetailPanel> {
     // Encargado y correo vienen de Firestore (solo comunidad UPJR).
     final staff = context.watch<PrivateDataProvider>().labStaffByName(lab.name);
     final maxHeight = MediaQuery.of(context).size.height * 0.74;
-    final entries = [
-      for (final s in widget.schedules) ...s.entries,
-    ].where((e) => e.day == _day).toList()
-      ..sort((a, b) => a.startTime.compareTo(b.startTime));
 
     return ConstrainedBox(
       constraints: BoxConstraints(maxWidth: 460, maxHeight: maxHeight),
@@ -383,46 +349,6 @@ class _LabDetailPanelState extends State<LabDetailPanel> {
                       lab.description,
                       style: const TextStyle(color: Colors.white70, fontSize: 13, height: 1.45),
                     ),
-                    if (canSeePrivate) ...[
-                    const SizedBox(height: 18),
-                    const Row(
-                      children: [
-                        Icon(Icons.schedule_rounded, color: AppColors.highlight, size: 18),
-                        SizedBox(width: 8),
-                        Text(
-                          'HORARIOS',
-                          style: TextStyle(
-                            color: AppColors.highlight,
-                            fontSize: 12,
-                            fontWeight: FontWeight.bold,
-                            letterSpacing: 1.2,
-                          ),
-                        ),
-                      ],
-                    ),
-                    const SizedBox(height: 10),
-                    _DayPicker(
-                      selected: _day,
-                      onChanged: (d) => setState(() => _day = d),
-                    ),
-                    const SizedBox(height: 12),
-                    if (entries.isEmpty)
-                      const Padding(
-                        padding: EdgeInsets.symmetric(vertical: 22),
-                        child: Center(
-                          child: Text(
-                            'No hay clases programadas\nen este laboratorio para este día.',
-                            textAlign: TextAlign.center,
-                            style: TextStyle(color: Colors.white54, fontSize: 12.5),
-                          ),
-                        ),
-                      )
-                    else
-                      for (final e in entries) ...[
-                        _ScheduleTile(entry: e, module: _module(e.startTime)),
-                        const SizedBox(height: 8),
-                      ],
-                    ],
                   ],
                 ),
               ),
@@ -484,166 +410,6 @@ class _InfoTile extends StatelessWidget {
             ),
           ],
         ),
-      ),
-    );
-  }
-}
-
-class _DayPicker extends StatelessWidget {
-  final String selected;
-  final ValueChanged<String> onChanged;
-
-  const _DayPicker({required this.selected, required this.onChanged});
-
-  static String _short(String day) => day.substring(0, 3);
-
-  @override
-  Widget build(BuildContext context) {
-    return Row(
-      children: [
-        for (final day in kWeekDays)
-          Expanded(
-            child: GestureDetector(
-              onTap: () => onChanged(day),
-              child: AnimatedContainer(
-                duration: const Duration(milliseconds: 180),
-                margin: const EdgeInsets.symmetric(horizontal: 3),
-                padding: const EdgeInsets.symmetric(vertical: 9),
-                decoration: BoxDecoration(
-                  borderRadius: BorderRadius.circular(16),
-                  gradient: day == selected
-                      ? LinearGradient(
-                          colors: [
-                            AppColors.highlight.withValues(alpha: 0.95),
-                            AppColors.highlight.withValues(alpha: 0.65),
-                          ],
-                        )
-                      : null,
-                  color: day == selected ? null : Colors.white.withValues(alpha: 0.07),
-                  border: Border.all(color: Colors.white.withValues(alpha: day == selected ? 0.5 : 0.12)),
-                ),
-                child: Text(
-                  _short(day),
-                  textAlign: TextAlign.center,
-                  style: TextStyle(
-                    color: day == selected ? Colors.white : Colors.white70,
-                    fontSize: 12,
-                    fontWeight: day == selected ? FontWeight.w800 : FontWeight.w600,
-                  ),
-                ),
-              ),
-            ),
-          ),
-      ],
-    );
-  }
-}
-
-class _ScheduleTile extends StatelessWidget {
-  final ScheduleEntry entry;
-  final String module;
-
-  const _ScheduleTile({required this.entry, required this.module});
-
-  @override
-  Widget build(BuildContext context) {
-    final now = isScheduleEntryNow(entry);
-    return Container(
-      padding: const EdgeInsets.all(12),
-      decoration: BoxDecoration(
-        color: Colors.white.withValues(alpha: now ? 0.12 : 0.06),
-        borderRadius: BorderRadius.circular(16),
-        border: Border.all(
-          color: now ? AppColors.highlight.withValues(alpha: 0.7) : Colors.white.withValues(alpha: 0.12),
-        ),
-      ),
-      child: Row(
-        crossAxisAlignment: CrossAxisAlignment.start,
-        children: [
-          SizedBox(
-            width: 70,
-            child: Column(
-              crossAxisAlignment: CrossAxisAlignment.start,
-              children: [
-                Text(
-                  entry.startTime,
-                  style: const TextStyle(color: Colors.white, fontSize: 15, fontWeight: FontWeight.w800),
-                ),
-                Text(entry.endTime, style: const TextStyle(color: Colors.white54, fontSize: 11.5)),
-                if (module.isNotEmpty) ...[
-                  const SizedBox(height: 4),
-                  Text(
-                    module,
-                    style: const TextStyle(color: AppColors.accent, fontSize: 10, fontWeight: FontWeight.w700),
-                  ),
-                ],
-              ],
-            ),
-          ),
-          Expanded(
-            child: Column(
-              crossAxisAlignment: CrossAxisAlignment.start,
-              children: [
-                Row(
-                  children: [
-                    Expanded(
-                      child: Text(
-                        entry.subject,
-                        style: const TextStyle(color: Colors.white, fontSize: 12.5, fontWeight: FontWeight.w800, height: 1.2),
-                      ),
-                    ),
-                    if (now)
-                      Container(
-                        margin: const EdgeInsets.only(left: 6),
-                        padding: const EdgeInsets.symmetric(horizontal: 7, vertical: 3),
-                        decoration: BoxDecoration(
-                          color: AppColors.highlight,
-                          borderRadius: BorderRadius.circular(8),
-                        ),
-                        child: const Text(
-                          'AHORA',
-                          style: TextStyle(color: Colors.white, fontSize: 9, fontWeight: FontWeight.w900),
-                        ),
-                      ),
-                  ],
-                ),
-                const SizedBox(height: 6),
-                Wrap(
-                  spacing: 8,
-                  runSpacing: 4,
-                  crossAxisAlignment: WrapCrossAlignment.center,
-                  children: [
-                    if (entry.group.isNotEmpty)
-                      Container(
-                        padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 3),
-                        decoration: BoxDecoration(
-                          color: AppColors.primary.withValues(alpha: 0.35),
-                          borderRadius: BorderRadius.circular(8),
-                        ),
-                        child: Text(
-                          'Grupo ${entry.group}',
-                          style: const TextStyle(color: Colors.white, fontSize: 10.5, fontWeight: FontWeight.w700),
-                        ),
-                      ),
-                    Row(
-                      mainAxisSize: MainAxisSize.min,
-                      children: [
-                        const Icon(Icons.person_outline_rounded, color: Colors.white54, size: 14),
-                        const SizedBox(width: 4),
-                        Flexible(
-                          child: Text(
-                            entry.teacher,
-                            style: const TextStyle(color: Colors.white70, fontSize: 11),
-                          ),
-                        ),
-                      ],
-                    ),
-                  ],
-                ),
-              ],
-            ),
-          ),
-        ],
       ),
     );
   }

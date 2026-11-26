@@ -154,7 +154,7 @@ class _LoginScreenState extends State<LoginScreen> {
                         ),
                         const SizedBox(height: 8),
                         const Text(
-                          'Alumnos y personal: entra con tu correo @upjr.edu.mx para ver profesores, horarios y trámites.',
+                          'Alumnos y personal: entra con tu correo @upjr.edu.mx para ver profesores y trámites.',
                           style: TextStyle(color: Colors.white70, fontSize: 12.5, height: 1.4),
                         ),
                         const SizedBox(height: 16),

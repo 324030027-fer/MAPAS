@@ -5,6 +5,7 @@ import '../providers/auth_provider.dart';
 import '../widgets/app_bottom_nav.dart';
 import 'map_screen.dart';
 import 'more_screen.dart';
+import 'school_screen.dart';
 import 'tours_screen.dart';
 
 class HomeScreen extends StatefulWidget {
@@ -17,7 +18,7 @@ class HomeScreen extends StatefulWidget {
 class _HomeScreenState extends State<HomeScreen> {
   int _selectedIndex = 0;
 
-  static const _pages = [MapScreen(), ToursScreen(), MoreScreen()];
+  static const _pages = [MapScreen(), ToursScreen(), SchoolScreen(), MoreScreen()];
 
   @override
   Widget build(BuildContext context) {

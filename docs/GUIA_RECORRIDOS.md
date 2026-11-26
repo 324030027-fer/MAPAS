@@ -211,3 +211,46 @@ Otras imágenes del proyecto que conviene revisar aunque no sean del recorrido:
 5. Vuelve a correr `flutter test test/tour_data_test.dart` (el reporte debe
    quedar sin avisos) y relanza la app. Con hot restart (`R`) o
    `flutter run -d windows` se recoge la imagen nueva; en web, vuelve a compilar.
+
+## Salones con acceso directo (propuesta para UD2)
+
+Un edificio con muchos salones no se recorre desde la entrada: el usuario toca
+el número del salón y entra directo a su foto 360°. Esto ya funciona en tres
+lugares:
+
+- **Ficha del edificio** en el mapa: la pestaña **SALONES** es la primera.
+- **Pestaña Recorridos**, sección *Ir directo a un salón*.
+- **Buscador del mapa**: `7`, `salón 7`, `ud2 7` o `móviles` muestran el salón.
+
+Dentro del visor, la barra inferior permite pasar al salón anterior/siguiente
+o elegir otro sin salir.
+
+### Pasos para meter las fotos
+
+1. **Toma una foto 360° por salón** desde el centro, a la altura de los ojos,
+   con la puerta cerrada y las luces encendidas. Formato equirectangular 2:1,
+   ideal 4096×2048 (mínimo 3000×1500), JPG calidad ~85, menos de 1.5 MB.
+2. **Nómbralas así** y ponlas en su carpeta (dos dígitos para que se ordenen):
+   `assets/ud2/salon_01.jpg`, `assets/ud2/salon_07.jpg`, `assets/ud2/lab_moviles.jpg`.
+   `tool/compress_photos.ps1` no toca subcarpetas, así que no las reduce.
+3. **Registra la carpeta** en `pubspec.yaml`, en `flutter: assets:`:
+   ```yaml
+   - assets/ud2/
+   ```
+4. **Ajusta `lib/data/rooms.dart`**: deja solo los salones que existen, con su
+   planta (`PB`/`PA`) y la ruta de su foto en `pano`:
+   ```dart
+   Room(id: 'UD2-07', buildingId: 'UD2', label: '7', name: 'Salón 7', floor: 'PA',
+        pano: 'assets/ud2/salon_07.jpg', initialYaw: 90),
+   ```
+   - `initialYaw`: hacia dónde se mira al entrar (el pizarrón). Se mide igual
+     que los rumbos de las flechas (sección 5).
+   - `aliases`: otras formas en que la gente lo busca (`['aula 7', 'S7']`).
+   - `tourStopId`: si el salón también es parada del recorrido del edificio,
+     pon su id y se entra al recorrido en ese punto.
+   - Mientras `pano` sea `null`, el botón aparece como *foto pendiente*.
+5. Corre `flutter test`: la prueba `rooms_and_calendar_test.dart` revisa ids
+   repetidos y que el edificio exista en el mapa.
+
+> Los salones 1–12 de UD2 que vienen en el código son **de ejemplo**: cámbialos
+> por los reales antes de publicar.

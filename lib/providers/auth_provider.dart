@@ -8,7 +8,7 @@ import 'package:shared_preferences/shared_preferences.dart';
 /// Quién usa la app.
 /// - [guest]: aspirantes y visitantes; solo ven la información pública.
 /// - [student]: comunidad UPJR (cuenta Google @upjr.edu.mx); ven profesores,
-///   horarios, trámites, etc.
+///   trámites, etc.
 /// - [admin]: cuenta UPJR registrada en la colección `admins` de Firestore;
 ///   además gestiona el contenido.
 enum UserRole { guest, student, admin }
@@ -54,7 +54,7 @@ class AuthProvider extends ChangeNotifier {
 
   UserRole get role => _user == null ? UserRole.guest : (_isAdmin ? UserRole.admin : UserRole.student);
 
-  /// Puede ver la información interna (profesores, horarios, trámites…).
+  /// Puede ver la información interna (profesores, trámites…).
   /// Esto oculta pantallas; la protección real de los datos la dan las
   /// reglas de Firestore (solo cuentas @upjr.edu.mx pueden leerlos).
   bool get canSeePrivate => role != UserRole.guest;
