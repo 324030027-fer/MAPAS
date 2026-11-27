@@ -1,6 +1,7 @@
 import 'package:flutter/material.dart';
 
 import '../core/theme/app_colors.dart';
+import '../widgets/brand.dart';
 import '../widgets/glass.dart';
 import '../widgets/responsive.dart';
 
@@ -33,22 +34,19 @@ class AboutScreen extends StatelessWidget {
       body: ListView(
         padding: centeredListPadding(context, top: 8, bottom: 40),
         children: [
-          Center(
-            child: Container(
-              width: 104,
-              height: 104,
-              padding: const EdgeInsets.all(14),
-              decoration: BoxDecoration(
-                shape: BoxShape.circle,
-                color: dark ? Colors.white.withValues(alpha: 0.08) : Colors.white,
-                border: Border.all(color: AppColors.accent.withValues(alpha: 0.5), width: 2),
-              ),
-              child: Image.asset('assets/logoapp.png'),
+          // El logo es blanco y azul: va sobre un fondo oscuro en ambos temas.
+          Container(
+            padding: const EdgeInsets.symmetric(vertical: 24),
+            decoration: BoxDecoration(
+              color: const Color(0xFF0E131C),
+              borderRadius: BorderRadius.circular(28),
+              border: Border.all(color: kBrandBlue.withValues(alpha: 0.3)),
             ),
+            child: const BrandLogo(height: 170),
           ),
           const SizedBox(height: 16),
           Text(
-            'NULLCORE MAPS',
+            kAppName,
             textAlign: TextAlign.center,
             style: TextStyle(color: fg, fontSize: 24, fontWeight: FontWeight.w900, letterSpacing: 1),
           ),

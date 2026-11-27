@@ -37,11 +37,7 @@ class MoreScreen extends StatelessWidget {
     final auth = context.watch<AuthProvider>();
     final isDark = Theme.of(context).brightness == Brightness.dark;
 
-    return GlassScaffold(
-      body: SafeArea(
-        child: ListView(
-          padding: centeredListPadding(context, top: 16, bottom: 110),
-          children: [
+    final left = <Widget>[
             _Header(auth: auth, isDark: isDark),
             const SizedBox(height: 24),
 
@@ -95,16 +91,31 @@ class MoreScreen extends StatelessWidget {
                 );
               },
             ),
-            const SizedBox(height: 28),
-
+    ];
+    final right = <Widget>[
             // ---------- Preferencias ----------
             _SectionTitle('Preferencias', isDark: isDark),
             const _ThemeCard(),
-            _Tile(
-              icon: Icons.tour_rounded,
-              title: 'Ver tutorial del mapa',
-              onTap: () => context.read<OnboardingProvider>().reset(),
-              isDark: isDark,
+            const SizedBox(height: 4),
+            // Ayuda e información como mosaicos (menos lista, más tablero).
+            Row(
+              children: [
+                Expanded(
+                  child: _MiniTile(
+                    icon: Icons.tour_rounded,
+                    title: 'Tutorial del mapa',
+                    onTap: () => context.read<OnboardingProvider>().reset(),
+                  ),
+                ),
+                const SizedBox(width: 12),
+                Expanded(
+                  child: _MiniTile(
+                    icon: Icons.info_outline_rounded,
+                    title: 'Acerca de',
+                    onTap: () => context.push('/about'),
+                  ),
+                ),
+              ],
             ),
 
             if (auth.isAdmin) ...[
@@ -137,16 +148,7 @@ class MoreScreen extends StatelessWidget {
               ),
             ],
 
-            const SizedBox(height: 20),
-            _SectionTitle('Información', isDark: isDark),
-            _Tile(
-              icon: Icons.info_outline_rounded,
-              title: 'Acerca de',
-              subtitle: 'NULLCORE MAPS y el equipo',
-              onTap: () => context.push('/about'),
-              isDark: isDark,
-            ),
-            const SizedBox(height: 20),
+            const SizedBox(height: 24),
             OutlinedButton.icon(
               onPressed: () => _confirmLogout(context, auth),
               icon: const Icon(Icons.logout_rounded, color: AppColors.danger),
@@ -160,12 +162,37 @@ class MoreScreen extends StatelessWidget {
             const SizedBox(height: 16),
             Center(
               child: Text(
-                'NULLCORE MAPS · UPJR Campus v1.2',
+                'WOLF-MAP · UPJR Campus v1.2',
                 style: TextStyle(color: isDark ? Colors.white38 : AppColors.textSecondaryLight, fontSize: 11),
               ),
             ),
-          ],
-        ),
+    ];
+
+    // PC: dos columnas (perfil y servicios | ajustes y sesión).
+    final wide = MediaQuery.sizeOf(context).width >= 1000;
+    return GlassScaffold(
+      body: SafeArea(
+        child: wide
+            ? SingleChildScrollView(
+                padding: centeredListPadding(context, maxWidth: 1000, top: 28, bottom: navBarInset(context)),
+                child: Row(
+                  crossAxisAlignment: CrossAxisAlignment.start,
+                  children: [
+                    Expanded(child: Column(crossAxisAlignment: CrossAxisAlignment.stretch, children: left)),
+                    const SizedBox(width: 28),
+                    Expanded(
+                      child: Padding(
+                        padding: const EdgeInsets.only(top: 4),
+                        child: Column(crossAxisAlignment: CrossAxisAlignment.stretch, children: right),
+                      ),
+                    ),
+                  ],
+                ),
+              )
+            : ListView(
+                padding: centeredListPadding(context, top: 16, bottom: navBarInset(context)),
+                children: [...left, const SizedBox(height: 28), ...right],
+              ),
       ),
     );
   }
@@ -536,6 +563,57 @@ class _ThemeCard extends StatelessWidget {
               ),
             ),
           ],
+        ),
+      ),
+    );
+  }
+}
+
+/// Mosaico cuadrado de acceso rápido.
+class _MiniTile extends StatelessWidget {
+  const _MiniTile({required this.icon, required this.title, required this.onTap});
+  final IconData icon;
+  final String title;
+  final VoidCallback onTap;
+
+  @override
+  Widget build(BuildContext context) {
+    final dark = Theme.of(context).brightness == Brightness.dark;
+    return GlassContainer(
+      radius: 20,
+      blur: 0,
+      child: Material(
+        color: Colors.transparent,
+        child: InkWell(
+          borderRadius: BorderRadius.circular(20),
+          onTap: onTap,
+          child: Padding(
+            padding: const EdgeInsets.fromLTRB(16, 16, 12, 16),
+            child: Row(
+              children: [
+                Container(
+                  width: 40,
+                  height: 40,
+                  decoration: BoxDecoration(
+                    color: AppColors.accent.withValues(alpha: 0.16),
+                    borderRadius: BorderRadius.circular(12),
+                  ),
+                  child: Icon(icon, color: dark ? AppColors.accent : AppColors.accentOnLight, size: 21),
+                ),
+                const SizedBox(width: 12),
+                Expanded(
+                  child: Text(
+                    title,
+                    style: TextStyle(
+                      color: dark ? Colors.white : AppColors.textPrimaryLight,
+                      fontWeight: FontWeight.w700,
+                      fontSize: 13.5,
+                    ),
+                  ),
+                ),
+              ],
+            ),
+          ),
         ),
       ),
     );

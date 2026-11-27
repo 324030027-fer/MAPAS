@@ -8,6 +8,7 @@ import 'providers/map_provider.dart';
 import 'providers/onboarding_provider.dart';
 import 'providers/private_data_provider.dart';
 import 'providers/theme_provider.dart';
+import 'providers/tour_overrides_provider.dart';
 import 'core/routes/app_router.dart';
 import 'core/theme/app_colors.dart';
 import 'core/theme/app_theme.dart';
@@ -47,12 +48,13 @@ class _NullCoreMapsAppState extends State<NullCoreMapsApp> {
         ChangeNotifierProvider(create: (_) => MapProvider()),
         ChangeNotifierProvider(create: (_) => PrivateDataProvider()),
         ChangeNotifierProvider(create: (_) => ThemeProvider()),
+        ChangeNotifierProvider(create: (_) => TourOverridesProvider()),
         ChangeNotifierProvider(create: (_) => OnboardingProvider()),
       ],
       child: Consumer<ThemeProvider>(
         builder: (context, theme, _) {
           return MaterialApp.router(
-            title: 'NULLCORE MAPS',
+            title: 'WOLF-MAP · Campus UPJR',
             debugShowCheckedModeBanner: false,
             theme: AppTheme.light,
             darkTheme: AppTheme.dark,

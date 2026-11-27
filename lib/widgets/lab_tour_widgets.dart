@@ -1,8 +1,8 @@
 import 'package:flutter/material.dart';
 import 'package:provider/provider.dart';
-import 'package:url_launcher/url_launcher.dart';
 
 import '../core/theme/app_colors.dart';
+import '../core/utils/mail.dart';
 import '../providers/auth_provider.dart';
 import '../providers/private_data_provider.dart';
 import '../models/map_location.dart';
@@ -238,12 +238,7 @@ class LabDetailPanel extends StatefulWidget {
 
 class _LabDetailPanelState extends State<LabDetailPanel> {
   Future<void> _mail(String address) async {
-    final uri = Uri(scheme: 'mailto', path: address);
-    try {
-      await launchUrl(uri);
-    } catch (_) {
-      // Sin cliente de correo disponible: no hay nada más que hacer.
-    }
+    await openGmailCompose(to: address, account: context.read<AuthProvider>().email);
   }
 
   @override

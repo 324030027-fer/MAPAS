@@ -79,100 +79,141 @@ class _AcademicCalendarViewState extends State<AcademicCalendarView> {
   @override
   Widget build(BuildContext context) {
     final ink = _Ink(context);
-    return Column(
-      crossAxisAlignment: CrossAxisAlignment.stretch,
-      children: [
-        _TermCard(today: _today),
-        const SizedBox(height: 14),
-        _UpcomingStrip(today: _today, onTap: _jumpTo),
-        const SizedBox(height: 14),
-        GlassContainer(
-          radius: 24,
-          blur: 10,
-          padding: const EdgeInsets.fromLTRB(14, 14, 14, 16),
-          child: Column(
-            crossAxisAlignment: CrossAxisAlignment.stretch,
-            children: [
-              _MonthHeader(
+
+    final monthCard = GlassContainer(
+      radius: 24,
+      blur: 10,
+      padding: const EdgeInsets.fromLTRB(14, 14, 14, 16),
+      child: Column(
+        crossAxisAlignment: CrossAxisAlignment.stretch,
+        children: [
+          _MonthHeader(
+            month: _month,
+            onPrev: _month > 1 ? () => _goToMonth(_month - 1) : null,
+            onNext: _month < 12 ? () => _goToMonth(_month + 1) : null,
+            onToday: _today.year == AcademicCalendar.year && (_month != _today.month || _selected != _today)
+                ? _goToday
+                : null,
+          ),
+          const SizedBox(height: 10),
+          _MonthPills(month: _month, today: _today, onTap: _goToMonth),
+          const SizedBox(height: 14),
+          GestureDetector(
+            // Deslizar a los lados cambia de mes.
+            onHorizontalDragEnd: (d) {
+              final v = d.primaryVelocity ?? 0;
+              if (v < -200) _goToMonth(_month + 1);
+              if (v > 200) _goToMonth(_month - 1);
+            },
+            child: AnimatedSwitcher(
+              duration: const Duration(milliseconds: 260),
+              switchInCurve: Curves.easeOutCubic,
+              switchOutCurve: Curves.easeInCubic,
+              transitionBuilder: (child, anim) {
+                final incoming = child.key == ValueKey(_month);
+                final dx = (incoming ? 0.12 : -0.12) * _direction;
+                return FadeTransition(
+                  opacity: anim,
+                  child: SlideTransition(
+                    position: Tween(begin: Offset(dx, 0), end: Offset.zero).animate(anim),
+                    child: child,
+                  ),
+                );
+              },
+              layoutBuilder: (current, previous) => Stack(
+                alignment: Alignment.topCenter,
+                children: [...previous, ?current],
+              ),
+              child: _MonthGrid(
+                key: ValueKey(_month),
                 month: _month,
-                onPrev: _month > 1 ? () => _goToMonth(_month - 1) : null,
-                onNext: _month < 12 ? () => _goToMonth(_month + 1) : null,
-                onToday: _today.year == AcademicCalendar.year && (_month != _today.month || _selected != _today)
-                    ? _goToday
-                    : null,
+                today: _today,
+                selected: _selected,
+                visible: _visible,
+                onSelect: (d) => setState(() => _selected = d),
               ),
-              const SizedBox(height: 10),
-              _MonthPills(month: _month, today: _today, onTap: _goToMonth),
-              const SizedBox(height: 14),
-              GestureDetector(
-                // Deslizar a los lados cambia de mes.
-                onHorizontalDragEnd: (d) {
-                  final v = d.primaryVelocity ?? 0;
-                  if (v < -200) _goToMonth(_month + 1);
-                  if (v > 200) _goToMonth(_month - 1);
-                },
-                child: AnimatedSwitcher(
-                  duration: const Duration(milliseconds: 260),
-                  switchInCurve: Curves.easeOutCubic,
-                  switchOutCurve: Curves.easeInCubic,
-                  transitionBuilder: (child, anim) {
-                    final incoming = child.key == ValueKey(_month);
-                    final dx = (incoming ? 0.12 : -0.12) * _direction;
-                    return FadeTransition(
-                      opacity: anim,
-                      child: SlideTransition(
-                        position: Tween(begin: Offset(dx, 0), end: Offset.zero).animate(anim),
-                        child: child,
-                      ),
-                    );
-                  },
-                  layoutBuilder: (current, previous) => Stack(
-                    alignment: Alignment.topCenter,
-                    children: [...previous, ?current],
-                  ),
-                  child: _MonthGrid(
-                    key: ValueKey(_month),
-                    month: _month,
-                    today: _today,
-                    selected: _selected,
-                    visible: _visible,
-                    onSelect: (d) => setState(() => _selected = d),
-                  ),
-                ),
-              ),
-              const SizedBox(height: 12),
-              _GroupFilters(
-                active: _groups,
-                onToggle: (g) => setState(() {
-                  if (_groups.contains(g)) {
-                    if (_groups.length > 1) _groups.remove(g);
-                  } else {
-                    _groups.add(g);
-                  }
-                }),
-              ),
-            ],
+            ),
           ),
-        ),
-        const SizedBox(height: 14),
-        _DayDetail(day: _selected, today: _today, events: AcademicCalendar.on(_selected).where(_visible).toList()),
-        const SizedBox(height: 14),
-        Padding(
-          padding: const EdgeInsets.only(left: 4, bottom: 8),
-          child: Text(
-            'EVENTOS DE ${kMonthNames[_month - 1].toUpperCase()}',
-            style: TextStyle(color: ink.muted, fontSize: 11, fontWeight: FontWeight.w800, letterSpacing: 1.3),
+          const SizedBox(height: 12),
+          _GroupFilters(
+            active: _groups,
+            onToggle: (g) => setState(() {
+              if (_groups.contains(g)) {
+                if (_groups.length > 1) _groups.remove(g);
+              } else {
+                _groups.add(g);
+              }
+            }),
           ),
-        ),
-        _MonthAgenda(
-          month: _month,
-          today: _today,
-          selected: _selected,
-          events: AcademicCalendar.inMonth(_month).where(_visible).toList(),
-          onTap: (e) => setState(() => _selected = e.start.month == _month ? e.start : _selected),
-        ),
-      ],
+        ],
+      ),
     );
+
+    final dayDetail =
+        _DayDetail(day: _selected, today: _today, events: AcademicCalendar.on(_selected).where(_visible).toList());
+    final agendaTitle = Padding(
+      padding: const EdgeInsets.only(left: 4, bottom: 8),
+      child: Text(
+        'EVENTOS DE ${kMonthNames[_month - 1].toUpperCase()}',
+        style: TextStyle(color: ink.muted, fontSize: 11, fontWeight: FontWeight.w800, letterSpacing: 1.3),
+      ),
+    );
+    final agenda = _MonthAgenda(
+      month: _month,
+      today: _today,
+      selected: _selected,
+      events: AcademicCalendar.inMonth(_month).where(_visible).toList(),
+      onTap: (e) => setState(() => _selected = e.start.month == _month ? e.start : _selected),
+    );
+
+    return LayoutBuilder(builder: (context, box) {
+      // PC / tableta horizontal: el mes a la izquierda y el detalle a la
+      // derecha, todo a la vista sin desplazarse tanto.
+      if (box.maxWidth >= 860) {
+        return Row(
+          crossAxisAlignment: CrossAxisAlignment.start,
+          children: [
+            Expanded(
+              flex: 11,
+              child: Column(
+                crossAxisAlignment: CrossAxisAlignment.stretch,
+                children: [_TermCard(today: _today), const SizedBox(height: 16), monthCard],
+              ),
+            ),
+            const SizedBox(width: 24),
+            Expanded(
+              flex: 9,
+              child: Column(
+                crossAxisAlignment: CrossAxisAlignment.stretch,
+                children: [
+                  dayDetail,
+                  const SizedBox(height: 16),
+                  _UpcomingStrip(today: _today, onTap: _jumpTo, vertical: true),
+                  const SizedBox(height: 16),
+                  agendaTitle,
+                  agenda,
+                ],
+              ),
+            ),
+          ],
+        );
+      }
+      return Column(
+        crossAxisAlignment: CrossAxisAlignment.stretch,
+        children: [
+          _TermCard(today: _today),
+          const SizedBox(height: 14),
+          _UpcomingStrip(today: _today, onTap: _jumpTo),
+          const SizedBox(height: 14),
+          monthCard,
+          const SizedBox(height: 14),
+          dayDetail,
+          const SizedBox(height: 14),
+          agendaTitle,
+          agenda,
+        ],
+      );
+    });
   }
 }
 
@@ -223,63 +264,63 @@ class _TermCard extends StatelessWidget {
         ),
         border: Border.all(color: AppColors.accent.withValues(alpha: ink.dark ? 0.35 : 0.5)),
       ),
-      child: Column(
-        crossAxisAlignment: CrossAxisAlignment.start,
+      child: Row(
         children: [
-          Row(
-            children: [
-              Container(
-                padding: const EdgeInsets.all(10),
-                decoration: BoxDecoration(
-                  color: AppColors.accent.withValues(alpha: 0.2),
-                  borderRadius: BorderRadius.circular(14),
-                ),
-                child: Icon(Icons.school_rounded, color: ink.accentText),
-              ),
-              const SizedBox(width: 12),
-              Expanded(
-                child: Column(
-                  crossAxisAlignment: CrossAxisAlignment.start,
-                  children: [
-                    Text(
-                      formatDay(today),
-                      style: TextStyle(color: ink.accentText, fontSize: 12, fontWeight: FontWeight.w700),
+          // Anillo de avance: la semana actual de un vistazo.
+          SizedBox(
+            width: 68,
+            height: 68,
+            child: progress == null
+                ? Container(
+                    decoration: BoxDecoration(color: AppColors.accent.withValues(alpha: 0.2), shape: BoxShape.circle),
+                    child: Icon(Icons.school_rounded, color: ink.accentText, size: 30),
+                  )
+                : TweenAnimationBuilder<double>(
+                    tween: Tween(begin: 0, end: progress.clamp(0, 1)),
+                    duration: const Duration(milliseconds: 900),
+                    curve: Curves.easeOutCubic,
+                    builder: (_, v, __) => Stack(
+                      fit: StackFit.expand,
+                      children: [
+                        CircularProgressIndicator(
+                          value: v,
+                          strokeWidth: 7,
+                          strokeCap: StrokeCap.round,
+                          backgroundColor: ink.dark ? Colors.white12 : Colors.black12,
+                          valueColor: const AlwaysStoppedAnimation(AppColors.accent),
+                        ),
+                        Center(
+                          child: Column(
+                            mainAxisSize: MainAxisSize.min,
+                            children: [
+                              Text(
+                                '${term!.weekOf(today)}',
+                                style: TextStyle(color: ink.fg, fontSize: 20, fontWeight: FontWeight.w900, height: 1),
+                              ),
+                              Text('de ${term.totalWeeks}', style: TextStyle(color: ink.muted, fontSize: 10.5)),
+                            ],
+                          ),
+                        ),
+                      ],
                     ),
-                    const SizedBox(height: 2),
-                    Text(title, style: TextStyle(color: ink.fg, fontSize: 17, fontWeight: FontWeight.w800)),
-                  ],
-                ),
-              ),
-              if (weekLabel != null)
-                Container(
-                  padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 6),
-                  decoration: BoxDecoration(color: AppColors.accent, borderRadius: BorderRadius.circular(12)),
-                  child: Text(
-                    weekLabel.replaceFirst('Semana ', 'Sem. '),
-                    style: const TextStyle(color: AppColors.onAccent, fontSize: 12, fontWeight: FontWeight.w900),
                   ),
-                ),
-            ],
           ),
-          if (progress != null) ...[
-            const SizedBox(height: 14),
-            ClipRRect(
-              borderRadius: BorderRadius.circular(6),
-              child: TweenAnimationBuilder<double>(
-                tween: Tween(begin: 0, end: progress.clamp(0, 1)),
-                duration: const Duration(milliseconds: 900),
-                curve: Curves.easeOutCubic,
-                builder: (_, v, __) => LinearProgressIndicator(
-                  value: v,
-                  minHeight: 8,
-                  backgroundColor: ink.dark ? Colors.white12 : Colors.black12,
-                  valueColor: const AlwaysStoppedAnimation(AppColors.accent),
+          const SizedBox(width: 16),
+          Expanded(
+            child: Column(
+              crossAxisAlignment: CrossAxisAlignment.start,
+              children: [
+                Text(
+                  weekLabel == null ? formatDay(today) : '${formatDay(today)} · $weekLabel',
+                  style: TextStyle(color: ink.accentText, fontSize: 12, fontWeight: FontWeight.w700),
                 ),
-              ),
+                const SizedBox(height: 3),
+                Text(title, style: TextStyle(color: ink.fg, fontSize: 17, fontWeight: FontWeight.w800)),
+                const SizedBox(height: 4),
+                Text(subtitle, style: TextStyle(color: ink.muted, fontSize: 13)),
+              ],
             ),
-          ],
-          const SizedBox(height: 10),
-          Text(subtitle, style: TextStyle(color: ink.muted, fontSize: 13)),
+          ),
         ],
       ),
     );
@@ -290,9 +331,12 @@ class _TermCard extends StatelessWidget {
 // Próximos eventos
 
 class _UpcomingStrip extends StatelessWidget {
-  const _UpcomingStrip({required this.today, required this.onTap});
+  const _UpcomingStrip({required this.today, required this.onTap, this.vertical = false});
   final DateTime today;
   final ValueChanged<CalendarEvent> onTap;
+
+  /// En columna (PC): filas compactas en lugar de tarjetas deslizables.
+  final bool vertical;
 
   static String countdown(CalendarEvent e, DateTime today) {
     if (e.covers(today)) return e.isRange ? 'En curso' : 'Hoy';
@@ -309,6 +353,69 @@ class _UpcomingStrip extends StatelessWidget {
     final ink = _Ink(context);
     final list = AcademicCalendar.upcoming(today, count: 4);
     if (list.isEmpty) return const SizedBox.shrink();
+    if (vertical) {
+      return Column(
+        crossAxisAlignment: CrossAxisAlignment.stretch,
+        children: [
+          Padding(
+            padding: const EdgeInsets.only(left: 4, bottom: 8),
+            child: Text(
+              'PRÓXIMOS',
+              style: TextStyle(color: ink.muted, fontSize: 11, fontWeight: FontWeight.w800, letterSpacing: 1.3),
+            ),
+          ),
+          GlassContainer(
+            radius: 20,
+            blur: 0,
+            padding: const EdgeInsets.all(8),
+            child: Column(
+              children: [
+                for (final e in list)
+                  Material(
+                    color: Colors.transparent,
+                    child: InkWell(
+                      borderRadius: BorderRadius.circular(14),
+                      onTap: () => onTap(e),
+                      child: Padding(
+                        padding: const EdgeInsets.symmetric(vertical: 8, horizontal: 6),
+                        child: Row(
+                          children: [
+                            Container(
+                              width: 4,
+                              height: 34,
+                              decoration: BoxDecoration(color: e.type.color, borderRadius: BorderRadius.circular(2)),
+                            ),
+                            const SizedBox(width: 12),
+                            Expanded(
+                              child: Column(
+                                crossAxisAlignment: CrossAxisAlignment.start,
+                                children: [
+                                  Text(
+                                    e.label,
+                                    maxLines: 1,
+                                    overflow: TextOverflow.ellipsis,
+                                    style: TextStyle(color: ink.fg, fontSize: 13.5, fontWeight: FontWeight.w700),
+                                  ),
+                                  Text(formatRange(e), style: TextStyle(color: ink.muted, fontSize: 12)),
+                                ],
+                              ),
+                            ),
+                            const SizedBox(width: 8),
+                            Text(
+                              countdown(e, today),
+                              style: TextStyle(color: ink.accentText, fontSize: 12, fontWeight: FontWeight.w800),
+                            ),
+                          ],
+                        ),
+                      ),
+                    ),
+                  ),
+              ],
+            ),
+          ),
+        ],
+      );
+    }
     return Column(
       crossAxisAlignment: CrossAxisAlignment.start,
       children: [
@@ -474,6 +581,52 @@ class _MonthPillsState extends State<_MonthPills> {
   @override
   Widget build(BuildContext context) {
     final ink = _Ink(context);
+    return LayoutBuilder(builder: (context, box) {
+      // Si caben los 12 meses, se reparten a lo ancho sin desplazamiento.
+      if (box.maxWidth >= 12 * 38) {
+        return SizedBox(
+          height: 34,
+          child: Row(
+            children: [
+              for (var i = 0; i < 12; i++) ...[
+                if (i > 0) const SizedBox(width: 4),
+                Expanded(child: _pill(ink, i)),
+              ],
+            ],
+          ),
+        );
+      }
+      return _scrollPills(ink);
+    });
+  }
+
+  Widget _pill(_Ink ink, int i) {
+    final m = i + 1;
+    final selected = m == widget.month;
+    final isNow = widget.today.year == AcademicCalendar.year && widget.today.month == m;
+    return Material(
+      color: selected ? AppColors.accent : ink.surface,
+      shape: StadiumBorder(
+        side: BorderSide(color: selected ? AppColors.accent : (isNow ? ink.accentText : ink.border)),
+      ),
+      child: InkWell(
+        customBorder: const StadiumBorder(),
+        onTap: () => widget.onTap(m),
+        child: Center(
+          child: Text(
+            kMonthNames[i].substring(0, 3),
+            style: TextStyle(
+              color: selected ? AppColors.onAccent : ink.fg,
+              fontWeight: selected ? FontWeight.w800 : FontWeight.w600,
+              fontSize: 12.5,
+            ),
+          ),
+        ),
+      ),
+    );
+  }
+
+  Widget _scrollPills(_Ink ink) {
     return SizedBox(
       height: 34,
       child: ListView.separated(
@@ -541,7 +694,10 @@ class _MonthGrid extends StatelessWidget {
     final cells = lead + days;
     final rows = (cells / 7).ceil();
 
-    return Column(
+    return LayoutBuilder(builder: (context, box) {
+      // Celdas más altas cuando hay espacio (PC), sin volverse franjas planas.
+      final cellH = (box.maxWidth / 7 * 0.72).clamp(42.0, 58.0);
+      return Column(
       children: [
         Row(
           children: [
@@ -568,7 +724,7 @@ class _MonthGrid extends StatelessWidget {
                 Expanded(
                   child: Builder(builder: (context) {
                     final n = r * 7 + c - lead + 1;
-                    if (n < 1 || n > days) return const SizedBox(height: 46);
+                    if (n < 1 || n > days) return SizedBox(height: cellH + 4);
                     final day = DateTime(AcademicCalendar.year, month, n);
                     return _DayCell(
                       day: day,
@@ -576,6 +732,7 @@ class _MonthGrid extends StatelessWidget {
                       isToday: day == today,
                       isSelected: day == selected,
                       weekend: c >= 5,
+                      height: cellH,
                       onTap: () => onSelect(day),
                     );
                   }),
@@ -584,6 +741,7 @@ class _MonthGrid extends StatelessWidget {
           ),
       ],
     );
+    });
   }
 }
 
@@ -595,7 +753,9 @@ class _DayCell extends StatelessWidget {
     required this.isSelected,
     required this.weekend,
     required this.onTap,
+    this.height = 42,
   });
+  final double height;
   final DateTime day;
   final List<CalendarEvent> events;
   final bool isToday, isSelected, weekend;
@@ -631,7 +791,7 @@ class _DayCell extends StatelessWidget {
             borderRadius: BorderRadius.circular(12),
             onTap: onTap,
             child: SizedBox(
-              height: 42,
+              height: height,
               child: Column(
                 mainAxisAlignment: MainAxisAlignment.center,
                 children: [

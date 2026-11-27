@@ -20,6 +20,11 @@ class ContentWidth {
   static const wide = 1100.0; // galerías
 }
 
+/// Espacio que hay que dejar abajo para que la barra de navegación flotante
+/// (solo en teléfono) no tape el contenido. En tableta/PC la barra es lateral.
+double navBarInset(BuildContext context) =>
+    Breakpoints.isWide(context) ? 24 : 96 + MediaQuery.paddingOf(context).bottom;
+
 /// Centra a su hijo y lo limita a [maxWidth].
 class ResponsiveCenter extends StatelessWidget {
   const ResponsiveCenter({super.key, required this.child, this.maxWidth = ContentWidth.page});

@@ -4,7 +4,7 @@ import '../../models/map_location.dart';
 
 /// Categorías de ubicación que sí llevan etiqueta en su flecha (entradas y
 /// baños); pasillos y esquinas solo muestran la flecha.
-const Set<String> kImportantTourCategories = {'Entrada', 'Baños H', 'Baños M'};
+const Set<String> kImportantTourCategories = {'Entrada', 'Baños H', 'Baños M', 'Escaleras'};
 
 bool isImportantTourStop(MapLocation loc) => kImportantTourCategories.contains(loc.category);
 

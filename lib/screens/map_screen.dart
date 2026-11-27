@@ -12,6 +12,7 @@ import '../models/map_location.dart';
 import '../providers/auth_provider.dart';
 import '../providers/map_provider.dart';
 import '../widgets/admin_badge.dart';
+import '../widgets/app_bottom_nav.dart' show AppSideNav;
 import '../widgets/building_outline_painter.dart';
 import '../widgets/glass.dart';
 import '../widgets/grid_painter.dart';
@@ -58,6 +59,10 @@ class _MapScreenState extends State<MapScreen> with TickerProviderStateMixin {
   String? _focusId;
   int _floor = 0; // planta mostrada del edificio abierto
   FloorZone? _zone; // zona tocada en el plano
+
+  /// Espacio libre arriba/abajo (teléfono: encabezado y barra de
+  /// navegación) para que el mapa quede centrado entre ambos y nada lo tape.
+  EdgeInsets _mapInsets = EdgeInsets.zero;
 
   bool get _isFiltering =>
       (_categoryFilter != null && _categoryFilter != 'Todos') || _searchQuery.isNotEmpty;
@@ -112,8 +117,9 @@ class _MapScreenState extends State<MapScreen> with TickerProviderStateMixin {
     final box = _viewerKey.currentContext?.findRenderObject() as RenderBox?;
     if (outline == null || box == null) return;
     final w = box.size.width, h = box.size.height;
-    final side = w < h ? w : h;
-    final off = Offset((w - side) / 2, (h - side) / 2);
+    final innerH = h - _mapInsets.vertical;
+    final side = w < innerH ? w : innerH;
+    final off = Offset((w - side) / 2, _mapInsets.top + (innerH - side) / 2);
     final r = outlineBounds(outline);
     final rect = Rect.fromLTRB(off.dx + r.left * side, off.dy + r.top * side,
         off.dx + r.right * side, off.dy + r.bottom * side);
@@ -172,75 +178,12 @@ class _MapScreenState extends State<MapScreen> with TickerProviderStateMixin {
                   ),
                 ),
                 const SizedBox(height: 3),
-                IgnorePointer(child: _SubtleLabel(z.name)),
+                IgnorePointer(child: _SubtleLabel(z.label ?? z.name)),
               ],
             ),
           ),
         );
       }).toList(),
-    );
-  }
-
-  /// Lista de lugares visibles (barra lateral de PC). Un edificio con
-  /// silueta se abre; los demás muestran su ficha.
-  Widget _buildPlacesList(MapProvider provider, List<MapLocation> visible, bool isDark) {
-    final places = visible.where((l) => !kInteriorParent.containsKey(l.id) || _isFiltering).toList()
-      ..sort((a, b) => (kShortNames[a.id] ?? a.title).compareTo(kShortNames[b.id] ?? b.title));
-    if (places.isEmpty) {
-      return Text('Sin resultados', style: TextStyle(color: isDark ? Colors.white54 : Colors.black45));
-    }
-    return ListView.separated(
-      padding: const EdgeInsets.only(bottom: 12),
-      itemCount: places.length,
-      separatorBuilder: (_, __) => const SizedBox(height: 4),
-      itemBuilder: (context, i) {
-        final l = places[i];
-        final active = l.id == _focusId || l.id == provider.selectedMapLocation?.id;
-        return Material(
-          color: active ? AppColors.primary.withValues(alpha: 0.22) : Colors.transparent,
-          borderRadius: BorderRadius.circular(12),
-          child: InkWell(
-            borderRadius: BorderRadius.circular(12),
-            onTap: () {
-              if (kBuildingOutlines.containsKey(l.id)) {
-                _focusBuilding(l.id);
-              } else {
-                provider.selectMapLocation(l);
-              }
-            },
-            child: Padding(
-              padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 9),
-              child: Row(
-                children: [
-                  Icon(l.icon, size: 20, color: active ? AppColors.accent : (isDark ? Colors.white70 : AppColors.textSecondaryLight)),
-                  const SizedBox(width: 12),
-                  Expanded(
-                    child: Column(
-                      crossAxisAlignment: CrossAxisAlignment.start,
-                      children: [
-                        Text(
-                          kShortNames[l.id] ?? l.title,
-                          maxLines: 1,
-                          overflow: TextOverflow.ellipsis,
-                          style: TextStyle(
-                            color: isDark ? Colors.white : AppColors.textPrimaryLight,
-                            fontWeight: FontWeight.w600,
-                            fontSize: 13.5,
-                          ),
-                        ),
-                        Text(
-                          l.category,
-                          style: TextStyle(color: isDark ? Colors.white54 : AppColors.textSecondaryLight, fontSize: 11.5),
-                        ),
-                      ],
-                    ),
-                  ),
-                ],
-              ),
-            ),
-          ),
-        );
-      },
     );
   }
 
@@ -324,6 +267,111 @@ class _MapScreenState extends State<MapScreen> with TickerProviderStateMixin {
     );
   }
 
+  Widget _titleBlock(AuthProvider auth, bool isDark) => Column(
+        crossAxisAlignment: CrossAxisAlignment.start,
+        mainAxisSize: MainAxisSize.min,
+        children: [
+          Row(
+            mainAxisSize: MainAxisSize.min,
+            children: [
+              Text(
+                'UPJR Campus',
+                style: TextStyle(
+                  color: isDark ? Colors.white : AppColors.textPrimaryLight,
+                  fontWeight: FontWeight.w900,
+                  fontSize: 20,
+                ),
+              ),
+              if (auth.showAdminTools) ...[
+                const SizedBox(width: 8),
+                const AdminBadge(),
+              ],
+            ],
+          ),
+          Text(
+            'Mapa interactivo',
+            style: TextStyle(
+              color: isDark ? AppColors.accent.withValues(alpha: 0.9) : AppColors.accentOnLight,
+              fontSize: 12,
+              fontWeight: FontWeight.w600,
+              letterSpacing: 1.5,
+            ),
+          ),
+        ],
+      );
+
+  /// Buscador compacto (46 px de alto).
+  Widget _searchField(bool isDark) => GlassContainer(
+        radius: 16,
+        blur: 10,
+        height: 46,
+        child: TextField(
+          controller: _searchController,
+          onChanged: (v) => setState(() => _searchQuery = v.trim()),
+          textAlignVertical: TextAlignVertical.center,
+          style: TextStyle(color: isDark ? Colors.white : AppColors.textPrimaryLight, fontSize: 14.5),
+          decoration: InputDecoration(
+            isCollapsed: true,
+            hintText: 'Buscar edificio, salón o categoría…',
+            hintStyle: TextStyle(color: isDark ? Colors.white54 : AppColors.textSecondaryLight, fontSize: 14.5),
+            prefixIcon: const Icon(Icons.search, color: AppColors.accent, size: 21),
+            suffixIcon: _searchQuery.isNotEmpty
+                ? IconButton(
+                    icon: const Icon(Icons.close, size: 19),
+                    onPressed: () {
+                      _searchController.clear();
+                      setState(() => _searchQuery = '');
+                    },
+                  )
+                : null,
+            filled: false,
+            border: InputBorder.none,
+            enabledBorder: InputBorder.none,
+            focusedBorder: InputBorder.none,
+          ),
+        ),
+      );
+
+  /// Elige una categoría (o todas con null) y encuadra sus lugares.
+  void _selectCategory(String? cat) {
+    setState(() {
+      _categoryFilter = cat;
+      _focusId = null;
+      _zone = null;
+    });
+    final provider = context.read<MapProvider>();
+    provider.selectMapLocation(null);
+    if (cat == null) {
+      _animateTo(Matrix4.identity());
+      return;
+    }
+    // Rectángulo que contiene todos los lugares de la categoría.
+    final rects = <Rect>[
+      for (final l in provider.mapPoints.where((l) => l.category == cat))
+        if (kBuildingOutlines[l.id] case final o?) outlineBounds(o) else Rect.fromCenter(center: Offset(l.x, l.y), width: 0.06, height: 0.06),
+    ];
+    if (rects.isEmpty) return;
+    final r = rects.reduce((a, b) => a.expandToInclude(b)).inflate(0.06);
+    _zoomToRect(r);
+  }
+
+  /// Acerca la vista para que [r] (coordenadas 0..1 del mapa) quede a la vista.
+  void _zoomToRect(Rect r) {
+    final box = _viewerKey.currentContext?.findRenderObject() as RenderBox?;
+    if (box == null) return;
+    final w = box.size.width, h = box.size.height;
+    final innerH = h - _mapInsets.vertical;
+    final side = w < innerH ? w : innerH;
+    final off = Offset((w - side) / 2, _mapInsets.top + (innerH - side) / 2);
+    final rect = Rect.fromLTRB(off.dx + r.left * side, off.dy + r.top * side, off.dx + r.right * side, off.dy + r.bottom * side);
+    final sx = w * 0.8 / rect.width, sy = innerH * 0.8 / rect.height;
+    final ns = (sx < sy ? sx : sy).clamp(1.0, 3.0);
+    final cy = _mapInsets.top + innerH / 2;
+    final tx = (w / 2 - rect.center.dx * ns).clamp(w - w * ns, 0.0);
+    final ty = (cy - rect.center.dy * ns).clamp(h - h * ns, 0.0);
+    _animateTo(Matrix4(ns, 0, 0, 0, 0, ns, 0, 0, 0, 0, 1, 0, tx, ty, 0, 1));
+  }
+
   @override
   void dispose() {
     _pulse.dispose();
@@ -362,19 +410,31 @@ class _MapScreenState extends State<MapScreen> with TickerProviderStateMixin {
 
     final hoverCard = _buildHoverCard(mapProvider, context);
 
-    // En pantallas anchas: cabecera compacta a la izquierda, barras inferiores
-    // centradas con ancho fijo y la ficha del lugar como panel lateral.
-    final screenW = MediaQuery.sizeOf(context).width;
-    final wide = screenW >= Breakpoints.tablet;
+    // Tres tamaños:
+    // - teléfono: encabezado flotante arriba y barra de navegación abajo.
+    // - tableta: igual, pero la navegación es lateral (fuera de esta pantalla)
+    //   y la ficha del lugar sale como panel a la derecha.
+    // - PC: además, encabezado y lista de lugares en una columna a la izquierda.
+    final fullW = MediaQuery.sizeOf(context).width;
+    final wide = fullW >= Breakpoints.tablet;
+    // Ancho real de esta pantalla (sin la barra de navegación lateral).
+    final screenW = fullW - (wide ? AppSideNav.width : 0);
     final sidePanel = wide && mapProvider.selectedMapLocation != null;
     const panelW = 420.0;
     const barMaxW = 560.0;
-    const sidebarW = 340.0;
-    final mapLeft = wide ? sidebarW : 0.0; // el mapa ocupa lo que deja la barra
+    // El buscador y los filtros flotan arriba en todos los tamaños: el mapa
+    // usa todo el ancho y nada queda amontonado a un lado.
+    const mapLeft = 0.0;
     final mapAreaW = screenW - mapLeft - (sidePanel ? panelW + 16 : 0);
     final barSide = mapAreaW > barMaxW + 32 ? (mapAreaW - barMaxW) / 2 : 16.0;
     final barLeft = mapLeft + barSide;
     final barRight = screenW - mapLeft - mapAreaW + barSide;
+    // Altura sobre la barra de navegación para los controles de abajo.
+    final bottomGap = wide ? 24.0 : navBarInset(context) + 8;
+    _mapInsets = EdgeInsets.only(
+      top: MediaQuery.paddingOf(context).top + (wide ? 124 : 166),
+      bottom: wide ? 24 : navBarInset(context),
+    );
 
     return Stack(
       key: _stackKey,
@@ -407,7 +467,9 @@ class _MapScreenState extends State<MapScreen> with TickerProviderStateMixin {
               minScale: 1.0,
               maxScale: _maxZoom,
               boundaryMargin: EdgeInsets.zero,
-              child: Center(
+              child: Padding(
+                padding: _mapInsets,
+                child: Center(
                 child: AspectRatio(
                   aspectRatio: 1,
                   child: LayoutBuilder(
@@ -468,6 +530,7 @@ class _MapScreenState extends State<MapScreen> with TickerProviderStateMixin {
                                         hoverId: _hoverBuildingId,
                                         focusId: _focusId,
                                         glow: isDark ? 1.0 : 0.4,
+                                        highlightAll: _categoryFilter != null,
                                       ),
                                     ),
                                   ),
@@ -489,13 +552,24 @@ class _MapScreenState extends State<MapScreen> with TickerProviderStateMixin {
                                         for (final l in visible)
                                           if (kBuildingOutlines[l.id] case final o?)
                                             Positioned(
-                                              left: outlineBounds(o).center.dx * constraints.maxWidth - 70,
-                                              top: outlineBounds(o).center.dy * constraints.maxHeight - 10,
-                                              width: 140,
-                                              height: 20,
+                                              // Sin salirse del mapa (p. ej. Rectoría, en la orilla).
+                                              left: (outlineBounds(o).center.dx * constraints.maxWidth - 90)
+                                                  .clamp(-90 + 90 / scale, constraints.maxWidth - 90 - 90 / scale),
+                                              top: outlineBounds(o).center.dy * constraints.maxHeight - 15,
+                                              width: 180,
+                                              height: 30,
                                               child: Transform.scale(
                                                 scale: 1 / scale,
-                                                child: Center(child: _SubtleLabel(kShortNames[l.id] ?? l.title)),
+                                                child: Center(
+                                                  // Al filtrar, los lugares que quedan se destacan.
+                                                  child: _categoryFilter != null
+                                                      ? _FocusLabel(icon: l.icon, text: kShortNames[l.id] ?? l.title)
+                                                      : _PlaceLabel(
+                                                          icon: l.icon,
+                                                          text: kShortNames[l.id] ?? l.title,
+                                                          active: _hoverBuildingId == l.id,
+                                                        ),
+                                                ),
                                               ),
                                             ),
                                       ],
@@ -540,7 +614,8 @@ class _MapScreenState extends State<MapScreen> with TickerProviderStateMixin {
                                     final inOpen = parent == _focusId && !kFloorPlans.containsKey(_focusId);
                                     return parent == null || inOpen || _isFiltering;
                                   }),
-                                  if (focused != null) ..._labPoints(focused),
+                                  // Con plano por planta, las zonas ya muestran los labs.
+                                  if (focused != null && !kFloorPlans.containsKey(focused.id)) ..._labPoints(focused),
                                 ];
                                 final ordered = [
                                   ...pins.where((l) => l.id != selectedId),
@@ -566,7 +641,7 @@ class _MapScreenState extends State<MapScreen> with TickerProviderStateMixin {
                                             child: MapMarker(
                                               location: loc,
                                               isSelected: selectedId == loc.id,
-                                              showLabel: scale >= _labelsZoom,
+                                              showLabel: scale >= _labelsZoom || _categoryFilter != null,
                                               onTap: () {
                                                 setState(() => _hoverId = null);
                                                 // Un laboratorio abre la ficha de su edificio.
@@ -588,6 +663,7 @@ class _MapScreenState extends State<MapScreen> with TickerProviderStateMixin {
                     },
                   ),
                 ),
+              ),
               ),
             ),
           ),
@@ -618,98 +694,48 @@ class _MapScreenState extends State<MapScreen> with TickerProviderStateMixin {
         Positioned(
           top: 0,
           left: 0,
-          right: wide ? null : 0,
-          bottom: wide ? 0 : null,
-          width: wide ? sidebarW : null,
+          right: sidePanel ? panelW + 16 : 0,
           child: Container(
             padding: EdgeInsets.only(
-              top: MediaQuery.of(context).padding.top + (wide ? 20 : 8),
+              top: MediaQuery.of(context).padding.top + (wide ? 16 : 8),
               bottom: 12,
-              left: wide ? 20 : 16,
-              right: wide ? 20 : 16,
+              left: wide ? 24 : 16,
+              right: wide ? 24 : 16,
             ),
-            decoration: wide
-                ? BoxDecoration(
-                    color: bg.withValues(alpha: 0.86),
-                    border: Border(right: BorderSide(color: (isDark ? Colors.white : Colors.black).withValues(alpha: 0.08))),
-                  )
-                : BoxDecoration(
-                    gradient: LinearGradient(
-                      begin: Alignment.topCenter,
-                      end: Alignment.bottomCenter,
-                      colors: [bg.withValues(alpha: 0.55), bg.withValues(alpha: 0)],
-                    ),
-                  ),
-            child: Column(
-              crossAxisAlignment: CrossAxisAlignment.start,
+            decoration: BoxDecoration(
+              gradient: LinearGradient(
+                begin: Alignment.topCenter,
+                end: Alignment.bottomCenter,
+                colors: [bg.withValues(alpha: wide ? 0.75 : 0.55), bg.withValues(alpha: 0)],
+              ),
+            ),
+            child: Align(
+              alignment: Alignment.topCenter,
+              child: Column(
+              crossAxisAlignment: CrossAxisAlignment.stretch,
               children: [
-                Row(
-                  children: [
-                    Expanded(
-                      child: Column(
-                        crossAxisAlignment: CrossAxisAlignment.start,
-                        children: [
-                          Row(
-                            children: [
-                              Text(
-                                'UPJR Campus',
-                                style: TextStyle(
-                                  color: isDark ? Colors.white : AppColors.textPrimaryLight,
-                                  fontWeight: FontWeight.w900,
-                                  fontSize: 20,
-                                ),
-                              ),
-                              if (auth.showAdminTools) ...[
-                                const SizedBox(width: 8),
-                                const AdminBadge(),
-                              ],
-                            ],
-                          ),
-                          Text(
-                            'Mapa interactivo',
-                            style: TextStyle(
-                              // En modo claro el cian se pierde: tono más oscuro.
-                              color: isDark ? AppColors.accent.withValues(alpha: 0.9) : const Color(0xFF9A6412),
-                              fontSize: 12,
-                              fontWeight: FontWeight.w600,
-                              letterSpacing: 1.5,
-                            ),
-                          ),
-                        ],
-                      ),
-                    ),
-                    Image.asset('assets/logo.png', width: 48, height: 48),
-                  ],
-                ),
-                const SizedBox(height: 12),
-                GlassContainer(
-                  radius: 18,
-                  blur: 10,
-                  child: TextField(
-                  controller: _searchController,
-                  onChanged: (v) => setState(() => _searchQuery = v.trim()),
-                  style: TextStyle(color: isDark ? Colors.white : AppColors.textPrimaryLight),
-                  decoration: InputDecoration(
-                    hintText: 'Buscar edificio, salón o categoría…',
-                    hintStyle: TextStyle(color: isDark ? Colors.white54 : AppColors.textSecondaryLight),
-                    prefixIcon: const Icon(Icons.search, color: AppColors.accent),
-                    suffixIcon: _searchQuery.isNotEmpty
-                        ? IconButton(
-                            icon: const Icon(Icons.close, size: 20),
-                            onPressed: () {
-                              _searchController.clear();
-                              setState(() => _searchQuery = '');
-                            },
-                          )
-                        : null,
-                    filled: false,
-                    border: InputBorder.none,
-                    enabledBorder: InputBorder.none,
-                    focusedBorder: InputBorder.none,
-                    contentPadding: const EdgeInsets.symmetric(vertical: 14),
+                // PC/tableta: título, buscador a todo lo ancho y logo en una
+                // sola fila; teléfono: título arriba y buscador debajo.
+                if (wide)
+                  Row(
+                    children: [
+                      _titleBlock(auth, isDark),
+                      const SizedBox(width: 24),
+                      Expanded(child: _searchField(isDark)),
+                      const SizedBox(width: 20),
+                      Image.asset('assets/logo.png', width: 44, height: 44),
+                    ],
+                  )
+                else ...[
+                  Row(
+                    children: [
+                      Expanded(child: _titleBlock(auth, isDark)),
+                      Image.asset('assets/logo.png', width: 44, height: 44),
+                    ],
                   ),
-                  ),
-                ),
+                  const SizedBox(height: 10),
+                  _searchField(isDark),
+                ],
                 const SizedBox(height: 10),
                 _CategoryChips(
                   wrap: wide,
@@ -718,7 +744,7 @@ class _MapScreenState extends State<MapScreen> with TickerProviderStateMixin {
                       return Padding(
                         padding: EdgeInsets.only(right: wide ? 0 : 8),
                         child: GestureDetector(
-                          onTap: () => setState(() => _categoryFilter = cat == 'Todos' ? null : cat),
+                          onTap: () => _selectCategory(cat == 'Todos' ? null : cat),
                           child: GlassContainer(
                             radius: 18,
                             blur: 0,
@@ -727,13 +753,26 @@ class _MapScreenState extends State<MapScreen> with TickerProviderStateMixin {
                             tintStrength: selected ? 2.4 : 1,
                             padding: const EdgeInsets.symmetric(horizontal: 14),
                             child: Center(
-                              child: Text(
-                                cat,
-                                style: TextStyle(
-                                  fontSize: 12,
-                                  fontWeight: selected ? FontWeight.w800 : FontWeight.w600,
-                                  color: isDark ? Colors.white : (selected ? AppColors.onAccent : AppColors.textPrimaryLight),
-                                ),
+                              child: Row(
+                                mainAxisSize: MainAxisSize.min,
+                                children: [
+                                  Icon(
+                                    _categoryIcon(cat),
+                                    size: 15,
+                                    color: selected
+                                        ? (isDark ? Colors.white : AppColors.onAccent)
+                                        : (isDark ? AppColors.accent : AppColors.accentOnLight),
+                                  ),
+                                  const SizedBox(width: 6),
+                                  Text(
+                                    cat,
+                                    style: TextStyle(
+                                      fontSize: 12,
+                                      fontWeight: selected ? FontWeight.w800 : FontWeight.w600,
+                                      color: isDark ? Colors.white : (selected ? AppColors.onAccent : AppColors.textPrimaryLight),
+                                    ),
+                                  ),
+                                ],
                               ),
                             ),
                           ),
@@ -744,30 +783,22 @@ class _MapScreenState extends State<MapScreen> with TickerProviderStateMixin {
                 // Salones que coinciden con la búsqueda ("salón 7", "ud2 7").
                 if (_searchQuery.isNotEmpty && searchRooms(_searchQuery).isNotEmpty) ...[
                   const SizedBox(height: 10),
-                  GlassContainer(
-                    radius: 18,
-                    blur: 10,
-                    tintStrength: wide ? 1 : 1.6,
-                    padding: const EdgeInsets.fromLTRB(8, 12, 8, 8),
-                    child: RoomSearchResults(query: _searchQuery, max: wide ? 5 : 3),
-                  ),
-                ],
-                // PC: lista de lugares bajo los filtros.
-                if (wide) ...[
-                  const SizedBox(height: 18),
-                  Text(
-                    'LUGARES',
-                    style: TextStyle(
-                      color: isDark ? Colors.white54 : AppColors.textSecondaryLight,
-                      fontSize: 11,
-                      fontWeight: FontWeight.w800,
-                      letterSpacing: 1.4,
+                  Align(
+                    alignment: Alignment.topCenter,
+                    child: GlassContainer(
+                      radius: 18,
+                      blur: 10,
+                      tintStrength: 1.6,
+                      padding: const EdgeInsets.fromLTRB(8, 12, 8, 8),
+                      child: ConstrainedBox(
+                        constraints: const BoxConstraints(maxWidth: 560),
+                        child: RoomSearchResults(query: _searchQuery, max: wide ? 5 : 3),
+                      ),
                     ),
                   ),
-                  const SizedBox(height: 6),
-                  Expanded(child: _buildPlacesList(mapProvider, visible, isDark)),
                 ],
               ],
+            ),
             ),
           ),
         ),
@@ -775,13 +806,58 @@ class _MapScreenState extends State<MapScreen> with TickerProviderStateMixin {
         if (auth.showAdminTools && mapProvider.selectedMapLocation == null)
           Positioned(
             right: 16,
-            bottom: 100,
+            bottom: bottomGap,
             child: FloatingActionButton.extended(
               heroTag: 'admin_hub',
               backgroundColor: AppColors.admin,
               icon: const Icon(Icons.admin_panel_settings, color: Colors.white),
               label: const Text('Admin', style: TextStyle(color: Colors.white, fontWeight: FontWeight.bold)),
               onPressed: () => context.push('/admin'),
+            ),
+          ),
+
+        // Filtro activo: deja claro qué se está mostrando y cómo volver.
+        if (_categoryFilter != null && _focusId == null && mapProvider.selectedMapLocation == null)
+          Positioned(
+            left: barLeft,
+            right: barRight,
+            bottom: bottomGap,
+            child: Center(
+              child: GlassContainer(
+                radius: 30,
+                blur: 12,
+                tintStrength: 1.6,
+                padding: const EdgeInsets.fromLTRB(16, 6, 6, 6),
+                child: Row(
+                  mainAxisSize: MainAxisSize.min,
+                  children: [
+                    Icon(_categoryIcon(_categoryFilter!), color: AppColors.accent, size: 20),
+                    const SizedBox(width: 10),
+                    Flexible(
+                      child: Text(
+                        '$_categoryFilter · ${visible.length} ${visible.length == 1 ? 'lugar' : 'lugares'}',
+                        maxLines: 1,
+                        overflow: TextOverflow.ellipsis,
+                        style: TextStyle(
+                          color: isDark ? Colors.white : AppColors.textPrimaryLight,
+                          fontWeight: FontWeight.w800,
+                        ),
+                      ),
+                    ),
+                    const SizedBox(width: 10),
+                    FilledButton.icon(
+                      onPressed: () => _selectCategory(null),
+                      icon: const Icon(Icons.layers_clear_rounded, size: 18),
+                      label: const Text('Ver todo'),
+                      style: FilledButton.styleFrom(
+                        backgroundColor: AppColors.accent,
+                        foregroundColor: AppColors.onAccent,
+                        visualDensity: VisualDensity.compact,
+                      ),
+                    ),
+                  ],
+                ),
+              ),
             ),
           ),
 
@@ -793,7 +869,7 @@ class _MapScreenState extends State<MapScreen> with TickerProviderStateMixin {
             return Positioned(
               left: barLeft,
               right: !wide && auth.showAdminTools ? 140 : barRight,
-              bottom: 100,
+              bottom: bottomGap,
               child: GlassContainer(
                 radius: 20,
                 blur: 12,
@@ -837,6 +913,18 @@ class _MapScreenState extends State<MapScreen> with TickerProviderStateMixin {
                         ),
                       ],
                     ),
+                    // Zona de un salón: entrar directo a su foto 360°.
+                    if (_zone?.roomId case final roomId?)
+                      if (kRooms.where((r) => r.id == roomId).firstOrNull case final room?)
+                        Align(
+                          alignment: Alignment.centerLeft,
+                          child: TextButton.icon(
+                            onPressed: () => openRoom(context, room),
+                            icon: Icon(room.has360 ? Icons.threesixty_rounded : Icons.hourglass_empty_rounded, size: 18),
+                            label: Text(room.has360 ? 'Entrar en 360°' : 'Foto 360° pendiente'),
+                            style: TextButton.styleFrom(foregroundColor: AppColors.highlight),
+                          ),
+                        ),
                     if (_zone?.guide case (final label, final route) when auth.canSeePrivate)
                       Align(
                         alignment: Alignment.centerLeft,
@@ -1024,6 +1112,93 @@ class _PinPreviewCard extends StatelessWidget {
   }
 }
 
+/// Etiqueta de cada edificio en el mapa: ícono en círculo ámbar y nombre en
+/// blanco sobre una pastilla oscura con borde y sombra; resalta sobre la foto
+/// satelital. Al pasar el mouse (active) se ilumina en ámbar.
+class _PlaceLabel extends StatelessWidget {
+  const _PlaceLabel({required this.icon, required this.text, this.active = false});
+  final IconData icon;
+  final String text;
+  final bool active;
+
+  @override
+  Widget build(BuildContext context) {
+    return AnimatedContainer(
+      duration: const Duration(milliseconds: 160),
+      padding: const EdgeInsets.fromLTRB(3, 3, 10, 3),
+      decoration: BoxDecoration(
+        color: active ? AppColors.accent : const Color(0xE01B2230),
+        borderRadius: BorderRadius.circular(20),
+        border: Border.all(color: active ? Colors.white : AppColors.accent.withValues(alpha: 0.75), width: 1.2),
+        boxShadow: [BoxShadow(color: Colors.black.withValues(alpha: 0.5), blurRadius: 8, offset: const Offset(0, 2))],
+      ),
+      child: Row(
+        mainAxisSize: MainAxisSize.min,
+        children: [
+          Container(
+            width: 20,
+            height: 20,
+            decoration: BoxDecoration(
+              color: active ? AppColors.onAccent : AppColors.accent,
+              shape: BoxShape.circle,
+            ),
+            child: Icon(icon, size: 12, color: active ? AppColors.accent : AppColors.onAccent),
+          ),
+          const SizedBox(width: 6),
+          Flexible(
+            child: Text(
+              text,
+              maxLines: 1,
+              overflow: TextOverflow.ellipsis,
+              style: TextStyle(
+                color: active ? AppColors.onAccent : Colors.white,
+                fontSize: 11.5,
+                fontWeight: FontWeight.w800,
+                letterSpacing: 0.2,
+              ),
+            ),
+          ),
+        ],
+      ),
+    );
+  }
+}
+
+/// Etiqueta destacada (al filtrar): pastilla ámbar con ícono, bien visible.
+class _FocusLabel extends StatelessWidget {
+  const _FocusLabel({required this.icon, required this.text});
+  final IconData icon;
+  final String text;
+
+  @override
+  Widget build(BuildContext context) {
+    return Container(
+      padding: const EdgeInsets.fromLTRB(6, 4, 10, 4),
+      decoration: BoxDecoration(
+        color: AppColors.accent,
+        borderRadius: BorderRadius.circular(20),
+        border: Border.all(color: Colors.white, width: 1.5),
+        boxShadow: [BoxShadow(color: Colors.black.withValues(alpha: 0.45), blurRadius: 8, offset: const Offset(0, 2))],
+      ),
+      child: Row(
+        mainAxisSize: MainAxisSize.min,
+        children: [
+          Icon(icon, size: 14, color: AppColors.onAccent),
+          const SizedBox(width: 5),
+          Flexible(
+            child: Text(
+              text,
+              maxLines: 1,
+              overflow: TextOverflow.ellipsis,
+              style: const TextStyle(color: AppColors.onAccent, fontSize: 11.5, fontWeight: FontWeight.w900),
+            ),
+          ),
+        ],
+      ),
+    );
+  }
+}
+
 /// Etiqueta pequeña y semitransparente: da contexto sin tapar el mapa.
 class _SubtleLabel extends StatelessWidget {
   const _SubtleLabel(this.text);
@@ -1052,6 +1227,21 @@ class _SubtleLabel extends StatelessWidget {
   }
 }
 
+/// Ícono de cada categoría del mapa: los filtros se reconocen sin leer.
+IconData _categoryIcon(String cat) => switch (cat) {
+      'Todos' => Icons.apps_rounded,
+      'Administración' => Icons.account_balance_rounded,
+      'Baños' => Icons.wc_rounded,
+      'Deportes' => Icons.sports_soccer_rounded,
+      'Docencia' => Icons.school_rounded,
+      'Estacionamiento' => Icons.local_parking_rounded,
+      'Estudio' => Icons.local_library_rounded,
+      'Extracurricular' => Icons.palette_rounded,
+      'Laboratorio' => Icons.science_rounded,
+      'Servicios' => Icons.restaurant_rounded,
+      _ => Icons.place_rounded,
+    };
+
 /// Filtros de categoría: fila deslizable (teléfono) o chips que se acomodan
 /// en varias líneas (PC, barra lateral).
 class _CategoryChips extends StatelessWidget {
@@ -1065,6 +1255,7 @@ class _CategoryChips extends StatelessWidget {
       return Wrap(
         spacing: 8,
         runSpacing: 8,
+        alignment: WrapAlignment.center,
         children: [for (final c in children) SizedBox(height: 34, child: IntrinsicWidth(child: c))],
       );
     }

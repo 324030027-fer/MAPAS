@@ -1,11 +1,12 @@
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 import 'package:provider/provider.dart';
-import 'package:url_launcher/url_launcher.dart';
 
 import '../core/theme/app_colors.dart';
+import '../core/utils/mail.dart';
 import '../data/rooms.dart' show normalize;
 import '../models/contact.dart';
+import '../providers/auth_provider.dart';
 import '../providers/private_data_provider.dart';
 import '../widgets/glass.dart';
 
@@ -119,19 +120,44 @@ class _ContactsSectionState extends State<ContactsSection> {
           for (final g in TeacherGroup.values)
             if (filtered.any((t) => t.group == g)) ...[
               _GroupHeader(group: g, count: filtered.where((t) => t.group == g).length),
-              GlassContainer(
-                radius: 20,
-                blur: 0,
-                margin: const EdgeInsets.only(bottom: 16),
-                padding: const EdgeInsets.symmetric(vertical: 4),
-                child: Column(
-                  children: [
-                    for (final (i, t) in filtered.where((t) => t.group == g).indexed) ...[
-                      if (i > 0) Divider(height: 1, indent: 72, color: dark ? Colors.white10 : Colors.black12),
-                      _TeacherRow(teacher: t),
-                    ],
-                  ],
-                ),
+              Padding(
+                padding: const EdgeInsets.only(bottom: 18),
+                child: LayoutBuilder(builder: (context, box) {
+                  final list = filtered.where((t) => t.group == g).toList();
+                  // PC: tarjetas en dos columnas; teléfono: una lista.
+                  if (box.maxWidth >= 720) {
+                    final w = (box.maxWidth - 12) / 2;
+                    return Wrap(
+                      spacing: 12,
+                      runSpacing: 12,
+                      children: [
+                        for (final t in list)
+                          SizedBox(
+                            width: w,
+                            child: GlassContainer(
+                              radius: 18,
+                              blur: 0,
+                              padding: const EdgeInsets.symmetric(vertical: 4),
+                              child: _TeacherRow(teacher: t),
+                            ),
+                          ),
+                      ],
+                    );
+                  }
+                  return GlassContainer(
+                    radius: 20,
+                    blur: 0,
+                    padding: const EdgeInsets.symmetric(vertical: 4),
+                    child: Column(
+                      children: [
+                        for (final (i, t) in list.indexed) ...[
+                          if (i > 0) Divider(height: 1, indent: 72, color: dark ? Colors.white10 : Colors.black12),
+                          _TeacherRow(teacher: t),
+                        ],
+                      ],
+                    ),
+                  );
+                }),
               ),
             ],
       ],
@@ -228,27 +254,42 @@ class _TeacherRow extends StatelessWidget {
           fontStyle: teacher.hasEmail ? null : FontStyle.italic,
         ),
       ),
-      trailing: IconButton(
-        tooltip: teacher.hasEmail ? 'Enviar correo' : 'Correo pendiente',
-        onPressed: teacher.hasEmail ? () => sendTeacherEmail(context, teacher) : null,
-        icon: const Icon(Icons.mail_outline_rounded),
-        color: dark ? AppColors.accent : AppColors.accentOnLight,
-      ),
+      trailing: teacher.hasEmail
+          ? IconButton.filledTonal(
+              tooltip: 'Escribir en Gmail',
+              onPressed: () => sendTeacherEmail(context, teacher),
+              icon: const Icon(Icons.mail_outline_rounded),
+              style: IconButton.styleFrom(
+                backgroundColor: AppColors.accent.withValues(alpha: 0.18),
+                foregroundColor: dark ? AppColors.accent : AppColors.accentOnLight,
+              ),
+            )
+          : Container(
+              padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 5),
+              decoration: BoxDecoration(
+                color: (dark ? Colors.white : Colors.black).withValues(alpha: 0.06),
+                borderRadius: BorderRadius.circular(20),
+              ),
+              child: Row(
+                mainAxisSize: MainAxisSize.min,
+                children: [
+                  Icon(Icons.hourglass_empty_rounded, size: 13, color: muted),
+                  const SizedBox(width: 4),
+                  Text('Pronto', style: TextStyle(color: muted, fontSize: 11.5, fontWeight: FontWeight.w700)),
+                ],
+              ),
+            ),
     );
   }
 }
 
 Future<void> sendTeacherEmail(BuildContext context, Contact teacher) async {
-  final uri = Uri(scheme: 'mailto', path: teacher.email);
-  var ok = false;
-  try {
-    ok = await launchUrl(uri);
-  } catch (_) {}
+  final ok = await openGmailCompose(to: teacher.email, account: context.read<AuthProvider>().email);
   if (!ok && context.mounted) {
     await Clipboard.setData(ClipboardData(text: teacher.email));
     if (context.mounted) {
       ScaffoldMessenger.of(context).showSnackBar(
-        const SnackBar(content: Text('No hay app de correo; copiamos la dirección.'), behavior: SnackBarBehavior.floating),
+        const SnackBar(content: Text('No se pudo abrir Gmail; copiamos la dirección.'), behavior: SnackBarBehavior.floating),
       );
     }
   }
@@ -340,7 +381,7 @@ Future<void> showTeacherSheet(BuildContext context, Contact t) {
                 child: FilledButton.icon(
                   onPressed: t.hasEmail ? () => sendTeacherEmail(ctx, t) : null,
                   icon: const Icon(Icons.mail_rounded),
-                  label: Text(t.hasEmail ? 'Enviar correo' : 'Correo pendiente'),
+                  label: Text(t.hasEmail ? 'Escribir en Gmail' : 'Correo pendiente'),
                   style: FilledButton.styleFrom(
                     backgroundColor: AppColors.accent,
                     foregroundColor: AppColors.onAccent,

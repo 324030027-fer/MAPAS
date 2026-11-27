@@ -252,5 +252,8 @@ o elegir otro sin salir.
 5. Corre `flutter test`: la prueba `rooms_and_calendar_test.dart` revisa ids
    repetidos y que el edificio exista en el mapa.
 
-> Los salones 1–12 de UD2 que vienen en el código son **de ejemplo**: cámbialos
-> por los reales antes de publicar.
+> UD2 ya tiene sus aulas reales (`lib/data/rooms.dart`) y su recorrido
+> (`lib/data/tours/ud2_tour.dart`). Faltan fotos de: pasillo "a#ya#" y WC de
+> planta baja, "u#u#" y WC de planta alta, y Aula 14. Mientras tanto, dos
+> tramos provisionales unen el vestíbulo/escaleras con las alas este; al
+> llegar las fotos, inserta esas paradas y borra el tramo directo.

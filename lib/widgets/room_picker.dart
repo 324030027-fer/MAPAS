@@ -23,7 +23,7 @@ void openRoom(BuildContext context, Room room, {bool replace = false}) {
   }
   final tour = room.tourStopId == null ? null : tourForMapLocation(room.buildingId);
   final viewer = tour != null
-      ? PanoramaViewer(tour: tour, startId: room.tourStopId, room: room)
+      ? PanoramaViewer(tour: tour, startId: room.tourStopId, initialYaw: room.initialYaw, room: room)
       : PanoramaViewer(
           tour: Tour.single(title: room.name, asset: room.pano!),
           initialYaw: room.initialYaw,
@@ -332,23 +332,51 @@ class _RoomTile extends StatelessWidget {
             ? AppColors.accent.withValues(alpha: 0.55)
             : p.border;
 
+    // Estado escrito bajo el número: no depende solo del color.
+    final status = Text(
+      ready ? '360°' : 'pronto',
+      style: TextStyle(
+        color: current ? AppColors.onAccent : (ready ? p.accentText : p.muted),
+        fontSize: 10,
+        fontWeight: FontWeight.w700,
+        letterSpacing: 0.3,
+      ),
+    );
     final content = numbered
-        ? Text(
-            room.label,
-            style: TextStyle(
-              color: ready ? p.fg : p.muted,
-              fontSize: 20,
-              fontWeight: FontWeight.w800,
-            ),
+        ? Column(
+            mainAxisSize: MainAxisSize.min,
+            children: [
+              Text(
+                room.label,
+                style: TextStyle(
+                  color: current ? AppColors.onAccent : (ready ? p.fg : p.muted),
+                  fontSize: 20,
+                  fontWeight: FontWeight.w800,
+                  height: 1.1,
+                ),
+              ),
+              status,
+            ],
           )
         : Row(
             mainAxisSize: MainAxisSize.min,
             children: [
-              Icon(room.kind.icon, size: 18, color: ready ? p.accentText : p.muted),
+              Icon(room.kind.icon, size: 20, color: current ? AppColors.onAccent : (ready ? p.accentText : p.muted)),
               const SizedBox(width: 8),
-              Text(
-                room.label,
-                style: TextStyle(color: ready ? p.fg : p.muted, fontSize: 14, fontWeight: FontWeight.w700),
+              Column(
+                mainAxisSize: MainAxisSize.min,
+                crossAxisAlignment: CrossAxisAlignment.start,
+                children: [
+                  Text(
+                    room.label,
+                    style: TextStyle(
+                      color: current ? AppColors.onAccent : (ready ? p.fg : p.muted),
+                      fontSize: 14,
+                      fontWeight: FontWeight.w700,
+                    ),
+                  ),
+                  status,
+                ],
               ),
             ],
           );
@@ -359,7 +387,7 @@ class _RoomTile extends StatelessWidget {
         button: true,
         label: ready ? room.name : '${room.name}, foto pendiente',
         child: Material(
-          color: current ? AppColors.accent.withValues(alpha: 0.22) : p.surface,
+          color: current ? AppColors.accent : (ready ? p.surface : p.surface.withValues(alpha: p.surface.a * 0.5)),
           shape: RoundedRectangleBorder(
             borderRadius: BorderRadius.circular(16),
             side: BorderSide(color: borderColor, width: current ? 2 : 1),
@@ -368,24 +396,11 @@ class _RoomTile extends StatelessWidget {
             borderRadius: BorderRadius.circular(16),
             onTap: onTap,
             child: SizedBox(
-              height: 58,
-              width: numbered ? 58 : null,
-              child: Stack(
-                children: [
-                  Padding(
-                    padding: EdgeInsets.symmetric(horizontal: numbered ? 0 : 16),
-                    child: Center(widthFactor: numbered ? null : 1, child: content),
-                  ),
-                  Positioned(
-                    top: 5,
-                    right: 6,
-                    child: Icon(
-                      ready ? Icons.threesixty_rounded : Icons.hourglass_empty_rounded,
-                      size: ready ? 13 : 11,
-                      color: ready ? p.accentText : p.muted.withValues(alpha: 0.7),
-                    ),
-                  ),
-                ],
+              height: 62,
+              width: numbered ? 62 : null,
+              child: Padding(
+                padding: EdgeInsets.symmetric(horizontal: numbered ? 0 : 16),
+                child: Center(widthFactor: numbered ? null : 1, child: content),
               ),
             ),
           ),

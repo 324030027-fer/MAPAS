@@ -250,6 +250,14 @@ class MapProvider extends ChangeNotifier {
         features: '• Pasto sintético\n• Futbol',
       ),
 
+      // ---------- EXTRACURRICULAR ----------
+      MapLocation(
+        id: 'EXTRACURRICULAR', title: 'EXTRACURRICULAR (TALLERES)',
+        description: 'Edificio de talleres extracurriculares: deporte, arte, cultura y salud. Está a un lado de la cancha de futbol.',
+        category: 'Extracurricular', x: 0.5915, y: 0.6080, assetImage360: '', icon: Icons.theater_comedy,
+        features: '• Deportes\n• Ballet folklórico\n• Enfermería\n• Dibujo\n• Música\n• Rondalla',
+      ),
+
       // ---------- ESTACIONAMIENTO ----------
       MapLocation(
         id: 'ESTACIONAMIENTO_ALUMNOS', title: 'ESTACIONAMIENTO DE ALUMNOS',

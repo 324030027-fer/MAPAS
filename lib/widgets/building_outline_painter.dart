@@ -12,7 +12,11 @@ class BuildingOutlinePainter extends CustomPainter {
     this.hoverId,
     this.focusId,
     this.glow = 1.0,
+    this.highlightAll = false,
   }) : super(repaint: pulse);
+
+  /// Resalta todas las siluetas (p. ej. al filtrar por categoría).
+  final bool highlightAll;
 
   /// Intensidad del brillo en reposo (1 = normal). En modo claro se baja
   /// para que el contorno no se vea deslumbrante sobre la foto.
@@ -31,7 +35,7 @@ class BuildingOutlinePainter extends CustomPainter {
     final t = Curves.easeInOut.transform(pulse.value);
     for (final e in outlines.entries) {
       final path = Path()..addPolygon(e.value.map((o) => Offset(o.dx * size.width, o.dy * size.height)).toList(), true);
-      final active = e.key == hoverId || e.key == focusId;
+      final active = highlightAll || e.key == hoverId || e.key == focusId;
       final c = active ? highlightColor : color;
 
       // Relleno muy tenue: deja ver el techo del edificio.
@@ -60,5 +64,5 @@ class BuildingOutlinePainter extends CustomPainter {
   @override
   bool shouldRepaint(BuildingOutlinePainter old) =>
       old.outlines != outlines || old.scale != scale || old.hoverId != hoverId ||
-      old.focusId != focusId || old.color != color || old.glow != glow;
+      old.focusId != focusId || old.color != color || old.glow != glow || old.highlightAll != highlightAll;
 }

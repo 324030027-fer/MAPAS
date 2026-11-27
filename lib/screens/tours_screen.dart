@@ -134,7 +134,7 @@ class _ToursScreenState extends State<ToursScreen> {
               // 3. Laboratorios
               _SectionHeader('LABORATORIOS EN 360°', top: 14),
               SliverToBoxAdapter(child: _Lab360List()),
-              const SliverToBoxAdapter(child: SizedBox(height: 110)),
+              SliverToBoxAdapter(child: SizedBox(height: navBarInset(context))),
             ],
           ),
         ),

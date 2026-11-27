@@ -221,8 +221,8 @@ class LocationDetailSheet extends StatelessWidget {
                                     children: [
                                       Icon(Icons.star, color: const Color(0xFFE8A33D), size: 18),
                                       const SizedBox(width: 8),
-                                      const Text(
-                                        "CARACTERÍSTICAS DESTACADAS",
+                                      Text(
+                                        location.category == 'Extracurricular' ? 'TALLERES' : 'CARACTERÍSTICAS DESTACADAS',
                                         style: TextStyle(
                                           color: Color(0xFFE8A33D),
                                           fontWeight: FontWeight.bold,
@@ -253,7 +253,9 @@ class LocationDetailSheet extends StatelessWidget {
                                 );
                               },
                               icon: const Icon(Icons.vrpano),
-                              label: Text('INICIAR RECORRIDO 360° DEL ${tourForMapLocation(location.id)!.shortName}'),
+                              label: Text(tourForMapLocation(location.id)!.stops.length == 1
+                                  ? 'VER EN 360°'
+                                  : 'INICIAR RECORRIDO 360° DEL ${tourForMapLocation(location.id)!.shortName}'),
                               style: OutlinedButton.styleFrom(
                                 foregroundColor: AppColors.accent,
                                 side: const BorderSide(color: AppColors.accent),

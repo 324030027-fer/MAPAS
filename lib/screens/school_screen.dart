@@ -34,7 +34,8 @@ class _SchoolScreenState extends State<SchoolScreen> {
     final dark = Theme.of(context).brightness == Brightness.dark;
     final fg = dark ? Colors.white : AppColors.textPrimaryLight;
     final muted = dark ? AppColors.textSecondaryDark : AppColors.textSecondaryLight;
-    final side = Breakpoints.isDesktop(context);
+    // Tableta en vertical y teléfono: botones para saltar entre secciones.
+    final showJumps = MediaQuery.sizeOf(context).width < 1000;
 
     final calendar = Column(
       key: _calendarKey,
@@ -59,7 +60,7 @@ class _SchoolScreenState extends State<SchoolScreen> {
     return GlassScaffold(
       body: SafeArea(
         child: SingleChildScrollView(
-          padding: centeredListPadding(context, maxWidth: side ? ContentWidth.wide : ContentWidth.page, top: 16, bottom: 110),
+          padding: centeredListPadding(context, maxWidth: ContentWidth.wide, top: 16, bottom: navBarInset(context)),
           child: Column(
             crossAxisAlignment: CrossAxisAlignment.stretch,
             children: [
@@ -78,7 +79,7 @@ class _SchoolScreenState extends State<SchoolScreen> {
                   Image.asset('assets/logo.png', width: 48, height: 48),
                 ],
               ),
-              if (!side) ...[
+              if (showJumps) ...[
                 const SizedBox(height: 14),
                 Row(
                   children: [
@@ -89,20 +90,9 @@ class _SchoolScreenState extends State<SchoolScreen> {
                 ),
               ],
               const SizedBox(height: 20),
-              if (side)
-                Row(
-                  crossAxisAlignment: CrossAxisAlignment.start,
-                  children: [
-                    Expanded(flex: 3, child: calendar),
-                    const SizedBox(width: 28),
-                    Expanded(flex: 2, child: contacts),
-                  ],
-                )
-              else ...[
-                calendar,
-                const SizedBox(height: 32),
-                contacts,
-              ],
+              calendar,
+              const SizedBox(height: 36),
+              contacts,
             ],
           ),
         ),

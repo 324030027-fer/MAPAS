@@ -3,6 +3,7 @@ import 'package:provider/provider.dart';
 
 import '../providers/auth_provider.dart';
 import '../widgets/app_bottom_nav.dart';
+import '../widgets/responsive.dart';
 import 'map_screen.dart';
 import 'more_screen.dart';
 import 'school_screen.dart';
@@ -23,6 +24,22 @@ class _HomeScreenState extends State<HomeScreen> {
   @override
   Widget build(BuildContext context) {
     final auth = context.watch<AuthProvider>();
+
+    // Tableta y PC: barra lateral fija; teléfono: barra flotante inferior.
+    if (Breakpoints.isWide(context)) {
+      return Scaffold(
+        body: Row(
+          children: [
+            AppSideNav(
+              selectedIndex: _selectedIndex,
+              onTap: (i) => setState(() => _selectedIndex = i),
+              isAdmin: auth.showAdminTools,
+            ),
+            Expanded(child: IndexedStack(index: _selectedIndex, children: _pages)),
+          ],
+        ),
+      );
+    }
 
     return Scaffold(
       extendBody: true,

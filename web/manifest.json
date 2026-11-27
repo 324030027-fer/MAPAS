@@ -1,11 +1,11 @@
 {
-    "name": "nullcore_maps",
-    "short_name": "nullcore_maps",
+    "name": "WOLF-MAP · Campus UPJR",
+    "short_name": "WOLF-MAP",
     "start_url": ".",
     "display": "standalone",
     "background_color": "#0175C2",
     "theme_color": "#0175C2",
-    "description": "A new Flutter project.",
+    "description": "Mapa interactivo del campus UPJR.",
     "orientation": "portrait-primary",
     "prefer_related_applications": false,
     "icons": [
