@@ -3,6 +3,7 @@ import 'dart:async';
 import 'package:cloud_firestore/cloud_firestore.dart';
 import 'package:firebase_auth/firebase_auth.dart';
 import 'package:flutter/foundation.dart';
+import 'package:google_sign_in/google_sign_in.dart';
 import 'package:shared_preferences/shared_preferences.dart';
 
 /// Quién usa la app.
@@ -24,6 +25,12 @@ class AuthFailure implements Exception {
 class AuthProvider extends ChangeNotifier {
   /// Dominio institucional permitido.
   static const allowedDomain = 'upjr.edu.mx';
+
+  /// Cliente OAuth "web" del proyecto Firebase (client_type 3 en
+  /// google-services.json). El inicio de sesión nativo lo necesita para
+  /// entregar un token que Firebase acepte.
+  static const _webClientId = '199247408799-59neu4cnaomfl4nbtsiv0rvlg157retr.apps.googleusercontent.com';
+  bool _googleReady = false;
 
   // El invitado no tiene cuenta: solo se recuerda su nombre en el dispositivo.
   static const _keyGuest = 'auth_guest';
@@ -120,22 +127,55 @@ class AuthProvider extends ChangeNotifier {
       throw AuthFailure('En la app de escritorio aún no se puede iniciar sesión con Google. '
           'Usa la versión web o la del celular.');
     }
-    final provider = GoogleAuthProvider()
-      // Sugiere a Google mostrar solo cuentas del dominio de la universidad.
-      ..setCustomParameters({'hd': allowedDomain, 'prompt': 'select_account'});
     try {
-      final cred = kIsWeb ? await _auth.signInWithPopup(provider) : await _auth.signInWithProvider(provider);
+      final cred = kIsWeb ? await _signInWeb() : await _signInNative();
       if (!_isInstitutional(cred.user?.email)) {
         await _auth.signOut();
+        if (!kIsWeb) {
+          try {
+            await GoogleSignIn.instance.signOut();
+          } catch (_) {}
+        }
         throw AuthFailure('Usa tu correo institucional @$allowedDomain.');
       }
       await _setGuest(false);
+    } on GoogleSignInException catch (e) {
+      if (e.code == GoogleSignInExceptionCode.canceled || e.code == GoogleSignInExceptionCode.interrupted) {
+        throw AuthFailure('Inicio de sesión cancelado.');
+      }
+      throw AuthFailure('No se pudo iniciar sesión con Google (${e.code.name}).');
     } on FirebaseAuthException catch (e) {
       if (e.code == 'popup-closed-by-user' || e.code == 'cancelled-popup-request' || e.code == 'web-context-canceled') {
         throw AuthFailure('Inicio de sesión cancelado.');
       }
       throw AuthFailure('No se pudo iniciar sesión (${e.code}).');
     }
+  }
+
+  /// Web: ventana emergente de Google.
+  Future<UserCredential> _signInWeb() {
+    final provider = GoogleAuthProvider()
+      // Sugiere a Google mostrar solo cuentas del dominio de la universidad.
+      ..setCustomParameters({'hd': allowedDomain, 'prompt': 'select_account'});
+    return _auth.signInWithPopup(provider);
+  }
+
+  /// Android/iOS: selector de cuentas NATIVO del sistema (sin navegador).
+  ///
+  /// Antes se usaba signInWithProvider, que abre una página de Firebase en el
+  /// navegador; en varios teléfonos el navegador perdía su almacenamiento y
+  /// salía "falta del estado inicial". El flujo nativo no pasa por el
+  /// navegador: se elige la cuenta y se entra directo.
+  Future<UserCredential> _signInNative() async {
+    final google = GoogleSignIn.instance;
+    if (!_googleReady) {
+      await google.initialize(serverClientId: _webClientId, hostedDomain: allowedDomain);
+      _googleReady = true;
+    }
+    final account = await google.authenticate();
+    final idToken = account.authentication.idToken;
+    if (idToken == null) throw AuthFailure('Google no entregó la credencial. Intenta de nuevo.');
+    return _auth.signInWithCredential(GoogleAuthProvider.credential(idToken: idToken));
   }
 
   /// Entrada como invitado (aspirante o visitante).
@@ -164,6 +204,12 @@ class AuthProvider extends ChangeNotifier {
     _guestName = '';
     await _setGuest(false);
     if (_user != null) {
+      // También en Google, para que la próxima vez se pueda elegir otra cuenta.
+      if (!kIsWeb && _googleReady) {
+        try {
+          await GoogleSignIn.instance.signOut();
+        } catch (_) {}
+      }
       await _auth.signOut(); // dispara _onUser(null)
     } else {
       notifyListeners();
