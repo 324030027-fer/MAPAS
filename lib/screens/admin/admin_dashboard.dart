@@ -5,8 +5,6 @@ import '../../core/theme/app_colors.dart';
 import '../../models/map_location.dart';
 import '../../providers/auth_provider.dart';
 import '../../providers/map_provider.dart';
-import '../../providers/schedule_provider.dart';
-import 'admin_hub_screen.dart';
 import 'location_editor.dart';
 import 'new_location_screen.dart';
 import '../../widgets/glass.dart';
@@ -37,7 +35,6 @@ class AdminDashboard extends StatelessWidget {
             itemCount: provider.mapPoints.length,
             itemBuilder: (context, index) {
               final loc = provider.mapPoints[index];
-              final hasSchedules = context.watch<ScheduleProvider>().hasSchedulesForLocation(loc.id);
               return GlassCard(
                 margin: const EdgeInsets.only(bottom: 12),
                 child: ListTile(
@@ -48,19 +45,12 @@ class AdminDashboard extends StatelessWidget {
                   ),
                   title: Text(loc.title, style: const TextStyle(fontWeight: FontWeight.bold, color: Colors.white)),
                   subtitle: Text(
-                    '${loc.category} · X:${loc.x.toStringAsFixed(2)} Y:${loc.y.toStringAsFixed(2)}'
-                    '${hasSchedules ? ' · Con horarios' : ''}',
+                    '${loc.category} · X:${loc.x.toStringAsFixed(2)} Y:${loc.y.toStringAsFixed(2)}',
                     style: const TextStyle(color: Colors.white54, fontSize: 12),
                   ),
                   trailing: Row(
                     mainAxisSize: MainAxisSize.min,
                     children: [
-                      if (!hasSchedules)
-                        IconButton(
-                          tooltip: 'Activar horarios',
-                          icon: const Icon(Icons.schedule, color: AppColors.accent),
-                          onPressed: () => enableSchedulesForLocation(context, loc.id, loc.title),
-                        ),
                       IconButton(
                         icon: const Icon(Icons.edit, color: AppColors.primary),
                         onPressed: () {
@@ -120,16 +110,13 @@ class AdminDashboard extends StatelessWidget {
   }
 
   void _confirmDelete(BuildContext context, MapProvider provider, MapLocation loc) {
-    final scheduleCount = context.read<ScheduleProvider>().getSchedulesForLocation(loc.id).length;
     showDialog(
       context: context,
       builder: (_) => AlertDialog(
         backgroundColor: AppColors.darkSurface,
         title: const Text('¿Eliminar ubicación?', style: TextStyle(color: Colors.white)),
         content: Text(
-          scheduleCount > 0
-              ? 'Se borrará "${loc.title}" y sus horarios asociados ($scheduleCount lab(s)).'
-              : 'Se borrará permanentemente: ${loc.title}',
+          'Se borrará permanentemente: ${loc.title}',
           style: const TextStyle(color: Colors.white70),
         ),
         actions: [

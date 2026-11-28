@@ -1,15 +1,14 @@
 import 'package:flutter/material.dart';
 import 'package:provider/provider.dart';
+import '../data/rooms.dart';
 import '../data/tours/tours.dart';
 import '../models/map_location.dart';
 import '../models/tour.dart';
 import '../core/theme/app_colors.dart';
-import '../providers/auth_provider.dart';
 import '../providers/private_data_provider.dart';
-import '../providers/schedule_provider.dart';
 import '../screens/panorama_viewer.dart';
 import 'glass.dart';
-import 'lab_schedule_viewer.dart';
+import 'room_picker.dart';
 
 // --- MARCADOR ---
 class MapMarker extends StatelessWidget {
@@ -47,7 +46,7 @@ class MapMarker extends StatelessWidget {
               decoration: BoxDecoration(
                 color: mainColor, shape: BoxShape.circle,
                 border: Border.all(color: Colors.white, width: 2.5),
-                boxShadow: [BoxShadow(color: mainColor.withOpacity(0.6), blurRadius: 10, spreadRadius: 2)],
+                boxShadow: [BoxShadow(color: mainColor.withValues(alpha: 0.6), blurRadius: 10, spreadRadius: 2)],
               ),
               child: Icon(location.icon, color: AppColors.onAccent, size: 20),
             ),
@@ -90,20 +89,20 @@ class LocationDetailSheet extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    final scheduleProvider = context.watch<ScheduleProvider>();
-    final schedules = scheduleProvider.getSchedulesForLocation(location.id);
     final bool hasLaboratories = location.careers.isNotEmpty;
-    // Horarios y encargados son información interna (no para invitados).
-    final bool canSeePrivate = context.watch<AuthProvider>().canSeePrivate;
-    final bool hasSchedules = canSeePrivate && schedules.isNotEmpty;
+    // Edificios con salones: esa pestaña va primero (es lo que más se busca).
+    final bool hasRooms = roomsOf(location.id).isNotEmpty;
 
     // Espacio para la barra de navegación flotante (66 de alto + 14 de margen
     // + área segura inferior): el contenido llega a verse completo al final.
     final double navInset = this.navInset ?? 92 + MediaQuery.of(context).padding.bottom;
 
-    List<String> tabTitles = ['DESCRIPCIÓN', 'FOTOS'];
-    if (hasLaboratories) tabTitles.add('LABORATORIOS');
-    if (hasSchedules) tabTitles.add('HORARIOS');
+    final tabTitles = [
+      if (hasRooms) 'SALONES',
+      'DESCRIPCIÓN',
+      'FOTOS',
+      if (hasLaboratories) 'LABORATORIOS',
+    ];
 
     return GlassContainer(
       borderRadius: const BorderRadius.vertical(top: Radius.circular(32)),
@@ -168,6 +167,8 @@ class LocationDetailSheet extends StatelessWidget {
               ),
             ),
             TabBar(
+              isScrollable: tabTitles.length > 3,
+              tabAlignment: tabTitles.length > 3 ? TabAlignment.start : null,
               indicatorColor: const Color(0xFFE8A33D),
               labelColor: const Color(0xFFE8A33D),
               unselectedLabelColor: Colors.white70,
@@ -179,6 +180,11 @@ class LocationDetailSheet extends StatelessWidget {
             Expanded(
               child: TabBarView(
                 children: [
+                  if (hasRooms)
+                    SingleChildScrollView(
+                      padding: EdgeInsets.fromLTRB(20, 18, 20, 24 + navInset),
+                      child: RoomPicker(buildingId: location.id, forceDark: true),
+                    ),
                   // DESCRIPCIÓN MEJORADA
                   SingleChildScrollView(
                     padding: EdgeInsets.fromLTRB(24, 24, 24, 24 + navInset),
@@ -204,7 +210,7 @@ class LocationDetailSheet extends StatelessWidget {
                             decoration: BoxDecoration(
                               color: const Color(0xFF1B2230),
                               borderRadius: BorderRadius.circular(16),
-                              border: Border.all(color: Colors.white.withOpacity(0.1)),
+                              border: Border.all(color: Colors.white.withValues(alpha: 0.1)),
                             ),
                             child: Padding(
                               padding: const EdgeInsets.all(16),
@@ -215,8 +221,8 @@ class LocationDetailSheet extends StatelessWidget {
                                     children: [
                                       Icon(Icons.star, color: const Color(0xFFE8A33D), size: 18),
                                       const SizedBox(width: 8),
-                                      const Text(
-                                        "CARACTERÍSTICAS DESTACADAS",
+                                      Text(
+                                        location.category == 'Extracurricular' ? 'TALLERES' : 'CARACTERÍSTICAS DESTACADAS',
                                         style: TextStyle(
                                           color: Color(0xFFE8A33D),
                                           fontWeight: FontWeight.bold,
@@ -247,7 +253,9 @@ class LocationDetailSheet extends StatelessWidget {
                                 );
                               },
                               icon: const Icon(Icons.vrpano),
-                              label: Text('INICIAR RECORRIDO 360° DEL ${tourForMapLocation(location.id)!.shortName}'),
+                              label: Text(tourForMapLocation(location.id)!.stops.length == 1
+                                  ? 'VER EN 360°'
+                                  : 'INICIAR RECORRIDO 360° DEL ${tourForMapLocation(location.id)!.shortName}'),
                               style: OutlinedButton.styleFrom(
                                 foregroundColor: AppColors.accent,
                                 side: const BorderSide(color: AppColors.accent),
@@ -265,12 +273,6 @@ class LocationDetailSheet extends StatelessWidget {
                     SingleChildScrollView(
                       padding: EdgeInsets.fromLTRB(24, 24, 24, 24 + navInset),
                       child: Column(children: location.careers.map((career) => _buildCareerSection(context, career)).toList()),
-                    ),
-                  // HORARIOS (si existen)
-                  if (hasSchedules)
-                    SingleChildScrollView(
-                      padding: EdgeInsets.fromLTRB(24, 24, 24, 24 + navInset),
-                      child: LabScheduleViewer(schedules: schedules),
                     ),
                 ],
               ),
@@ -321,7 +323,7 @@ class LocationDetailSheet extends StatelessWidget {
     return Container(
       margin: const EdgeInsets.only(bottom: 16),
       padding: const EdgeInsets.all(12),
-      decoration: BoxDecoration(color: const Color(0xFF263042), borderRadius: BorderRadius.circular(12), border: Border.all(color: Colors.white.withOpacity(0.05))),
+      decoration: BoxDecoration(color: const Color(0xFF263042), borderRadius: BorderRadius.circular(12), border: Border.all(color: Colors.white.withValues(alpha: 0.05))),
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
@@ -341,7 +343,7 @@ class LocationDetailSheet extends StatelessWidget {
                     const SizedBox(height: 4),
                     // Encargado y correo: vienen de Firestore (solo comunidad UPJR).
                     if (context.watch<PrivateDataProvider>().labStaffByName(lab.name) case final staff?) ...[
-                      Text("Encargado: ${staff.inCharge}", style: TextStyle(color: Colors.white.withOpacity(0.6), fontSize: 11)),
+                      Text("Encargado: ${staff.inCharge}", style: TextStyle(color: Colors.white.withValues(alpha: 0.6), fontSize: 11)),
                       Text(staff.contact, style: const TextStyle(color: Color(0xFFE8A33D), fontSize: 11)),
                     ],
                   ],
@@ -350,7 +352,7 @@ class LocationDetailSheet extends StatelessWidget {
             ],
           ),
           const SizedBox(height: 8),
-          Text(lab.description, style: TextStyle(color: Colors.white.withOpacity(0.7), fontSize: 12)),
+          Text(lab.description, style: TextStyle(color: Colors.white.withValues(alpha: 0.7), fontSize: 12)),
           if (lab.asset360 != null) ...[
             const SizedBox(height: 12),
             SizedBox(

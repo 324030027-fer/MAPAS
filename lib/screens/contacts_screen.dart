@@ -1,69 +1,401 @@
 import 'package:flutter/material.dart';
+import 'package:flutter/services.dart';
 import 'package:provider/provider.dart';
 
+import '../core/theme/app_colors.dart';
+import '../core/utils/mail.dart';
+import '../data/rooms.dart' show normalize;
 import '../models/contact.dart';
+import '../providers/auth_provider.dart';
 import '../providers/private_data_provider.dart';
-import 'teacher_profile_screen.dart';
 import '../widgets/glass.dart';
-import '../widgets/responsive.dart';
 
-class ContactsScreen extends StatelessWidget {
-  const ContactsScreen({super.key});
+/// Directorio de profesores: buscador, filtro por clase (carreras, Desarrollo
+/// Humano, Inglés) y lista agrupada. Solo nombre, correo y foto.
+class ContactsSection extends StatefulWidget {
+  const ContactsSection({super.key});
+
+  @override
+  State<ContactsSection> createState() => _ContactsSectionState();
+}
+
+class _ContactsSectionState extends State<ContactsSection> {
+  final _search = TextEditingController();
+  String _query = '';
+  TeacherGroup? _group; // null = todas
+
+  @override
+  void dispose() {
+    _search.dispose();
+    super.dispose();
+  }
 
   @override
   Widget build(BuildContext context) {
+    final dark = Theme.of(context).brightness == Brightness.dark;
+    final fg = dark ? Colors.white : AppColors.textPrimaryLight;
+    final muted = dark ? AppColors.textSecondaryDark : AppColors.textSecondaryLight;
     final data = context.watch<PrivateDataProvider>();
-    final teachers = data.teachers;
-    return GlassScaffold(
-      forceDark: true,
-      backgroundColor: const Color(0xFF1B2230),
-      appBar: AppBar(
-        title: const Text('Contactos'),
-        backgroundColor: const Color(0xFF1B2230),
-        foregroundColor: Colors.white,
-      ),
-      body: teachers.isEmpty
-          ? Center(
-              child: data.loaded
-                  ? const Text('Aún no hay profesores registrados.', style: TextStyle(color: Colors.white70))
-                  : const CircularProgressIndicator(),
-            )
-          : ListView.builder(
-        padding: centeredListPadding(context, horizontal: 0, top: 8, bottom: 24),
-        itemCount: teachers.length,
-        itemBuilder: (ctx, index) {
-          final teacher = teachers[index];
-          return GlassCard(
-            margin: const EdgeInsets.symmetric(horizontal: 16, vertical: 8),
-            child: ListTile(
-              leading: TeacherAvatar(teacher: teacher, radius: 20),
-              title: Text(
-                teacher.name,
-                style: const TextStyle(color: Colors.white),
-              ),
-              subtitle: Text(
-                teacher.subject,
-                style: const TextStyle(color: Colors.white70),
-              ),
-              trailing: const Icon(
-                Icons.arrow_forward_ios,
-                color: Color(0xFFE8A33D),
-                size: 16,
-              ),
-              onTap: () {
-                Navigator.push(
-                  context,
-                  MaterialPageRoute(
-                    builder: (_) => TeacherProfileScreen(teacher: teacher),
-                  ),
-                );
-              },
+    final all = data.teachers;
+
+    if (all.isEmpty) {
+      return GlassContainer(
+        radius: 20,
+        blur: 0,
+        padding: const EdgeInsets.all(24),
+        child: Center(
+          child: data.loaded
+              ? Text('Aún no hay profesores registrados.', style: TextStyle(color: muted))
+              : const CircularProgressIndicator(),
+        ),
+      );
+    }
+
+    final q = normalize(_query);
+    final filtered = all.where((t) {
+      if (_group != null && t.group != _group) return false;
+      if (q.isEmpty) return true;
+      return normalize('${t.name} ${t.email}').contains(q);
+    }).toList();
+
+    // Clases que realmente tienen profesores, en el orden del enum.
+    final present = TeacherGroup.values.where((g) => all.any((t) => t.group == g)).toList();
+
+    return Column(
+      crossAxisAlignment: CrossAxisAlignment.stretch,
+      children: [
+        GlassContainer(
+          radius: 16,
+          blur: 0,
+          child: TextField(
+            controller: _search,
+            onChanged: (v) => setState(() => _query = v.trim()),
+            style: TextStyle(color: fg),
+            decoration: InputDecoration(
+              hintText: 'Buscar profesor por nombre o correo',
+              hintStyle: TextStyle(color: muted, fontSize: 14),
+              prefixIcon: Icon(Icons.search_rounded, color: dark ? AppColors.accent : AppColors.accentOnLight),
+              suffixIcon: _query.isEmpty
+                  ? null
+                  : IconButton(
+                      tooltip: 'Borrar',
+                      icon: const Icon(Icons.close_rounded, size: 20),
+                      onPressed: () {
+                        _search.clear();
+                        setState(() => _query = '');
+                      },
+                    ),
+              filled: false,
+              border: InputBorder.none,
+              enabledBorder: InputBorder.none,
+              focusedBorder: InputBorder.none,
+              contentPadding: const EdgeInsets.symmetric(vertical: 14),
             ),
-          );
-        },
+          ),
+        ),
+        const SizedBox(height: 10),
+        SizedBox(
+          height: 38,
+          child: ListView(
+            scrollDirection: Axis.horizontal,
+            children: [
+              _GroupChip(label: 'Todos', selected: _group == null, onTap: () => setState(() => _group = null)),
+              for (final g in present)
+                _GroupChip(
+                  label: g.short,
+                  icon: g.icon,
+                  selected: _group == g,
+                  onTap: () => setState(() => _group = _group == g ? null : g),
+                ),
+            ],
+          ),
+        ),
+        const SizedBox(height: 14),
+        if (filtered.isEmpty)
+          Padding(
+            padding: const EdgeInsets.all(16),
+            child: Text('Ningún profesor coincide con la búsqueda.', style: TextStyle(color: muted)),
+          )
+        else
+          for (final g in TeacherGroup.values)
+            if (filtered.any((t) => t.group == g)) ...[
+              _GroupHeader(group: g, count: filtered.where((t) => t.group == g).length),
+              Padding(
+                padding: const EdgeInsets.only(bottom: 18),
+                child: LayoutBuilder(builder: (context, box) {
+                  final list = filtered.where((t) => t.group == g).toList();
+                  // PC: tarjetas en dos columnas; teléfono: una lista.
+                  if (box.maxWidth >= 720) {
+                    final w = (box.maxWidth - 12) / 2;
+                    return Wrap(
+                      spacing: 12,
+                      runSpacing: 12,
+                      children: [
+                        for (final t in list)
+                          SizedBox(
+                            width: w,
+                            child: GlassContainer(
+                              radius: 18,
+                              blur: 0,
+                              padding: const EdgeInsets.symmetric(vertical: 4),
+                              child: _TeacherRow(teacher: t),
+                            ),
+                          ),
+                      ],
+                    );
+                  }
+                  return GlassContainer(
+                    radius: 20,
+                    blur: 0,
+                    padding: const EdgeInsets.symmetric(vertical: 4),
+                    child: Column(
+                      children: [
+                        for (final (i, t) in list.indexed) ...[
+                          if (i > 0) Divider(height: 1, indent: 72, color: dark ? Colors.white10 : Colors.black12),
+                          _TeacherRow(teacher: t),
+                        ],
+                      ],
+                    ),
+                  );
+                }),
+              ),
+            ],
+      ],
+    );
+  }
+}
+
+class _GroupChip extends StatelessWidget {
+  const _GroupChip({required this.label, required this.selected, required this.onTap, this.icon});
+  final String label;
+  final bool selected;
+  final VoidCallback onTap;
+  final IconData? icon;
+
+  @override
+  Widget build(BuildContext context) {
+    final dark = Theme.of(context).brightness == Brightness.dark;
+    return Padding(
+      padding: const EdgeInsets.only(right: 8),
+      child: ChoiceChip(
+        selected: selected,
+        onSelected: (_) => onTap(),
+        showCheckmark: false,
+        avatar: icon == null
+            ? null
+            : Icon(icon, size: 16, color: selected ? AppColors.onAccent : (dark ? Colors.white70 : AppColors.textSecondaryLight)),
+        label: Text(label),
+        labelStyle: TextStyle(
+          color: selected ? AppColors.onAccent : (dark ? Colors.white : AppColors.textPrimaryLight),
+          fontWeight: selected ? FontWeight.w800 : FontWeight.w600,
+          fontSize: 12.5,
+        ),
+        selectedColor: AppColors.accent,
+        backgroundColor: dark ? Colors.white.withValues(alpha: 0.06) : Colors.white.withValues(alpha: 0.8),
+        side: BorderSide(color: selected ? AppColors.accent : (dark ? Colors.white12 : Colors.black12)),
+        shape: const StadiumBorder(),
       ),
     );
   }
+}
+
+class _GroupHeader extends StatelessWidget {
+  const _GroupHeader({required this.group, required this.count});
+  final TeacherGroup group;
+  final int count;
+
+  @override
+  Widget build(BuildContext context) {
+    final dark = Theme.of(context).brightness == Brightness.dark;
+    final muted = dark ? AppColors.textSecondaryDark : AppColors.textSecondaryLight;
+    return Padding(
+      padding: const EdgeInsets.fromLTRB(4, 0, 4, 8),
+      child: Row(
+        children: [
+          Icon(group.icon, size: 16, color: dark ? AppColors.accent : AppColors.accentOnLight),
+          const SizedBox(width: 8),
+          Expanded(
+            child: Text(
+              group.isCareer ? 'Especialidad · ${group.label}' : group.label,
+              style: TextStyle(
+                color: dark ? Colors.white : AppColors.textPrimaryLight,
+                fontSize: 13,
+                fontWeight: FontWeight.w800,
+              ),
+            ),
+          ),
+          Text('$count', style: TextStyle(color: muted, fontSize: 12, fontWeight: FontWeight.w700)),
+        ],
+      ),
+    );
+  }
+}
+
+class _TeacherRow extends StatelessWidget {
+  const _TeacherRow({required this.teacher});
+  final Contact teacher;
+
+  @override
+  Widget build(BuildContext context) {
+    final dark = Theme.of(context).brightness == Brightness.dark;
+    final fg = dark ? Colors.white : AppColors.textPrimaryLight;
+    final muted = dark ? AppColors.textSecondaryDark : AppColors.textSecondaryLight;
+    return ListTile(
+      onTap: () => showTeacherSheet(context, teacher),
+      leading: TeacherAvatar(teacher: teacher, radius: 22),
+      title: Text(teacher.name, style: TextStyle(color: fg, fontWeight: FontWeight.w700, fontSize: 14.5)),
+      subtitle: Text(
+        teacher.hasEmail ? teacher.email : 'Correo pendiente',
+        maxLines: 1,
+        overflow: TextOverflow.ellipsis,
+        style: TextStyle(
+          color: muted,
+          fontSize: 12.5,
+          fontStyle: teacher.hasEmail ? null : FontStyle.italic,
+        ),
+      ),
+      trailing: teacher.hasEmail
+          ? IconButton.filledTonal(
+              tooltip: 'Escribir en Gmail',
+              onPressed: () => sendTeacherEmail(context, teacher),
+              icon: const Icon(Icons.mail_outline_rounded),
+              style: IconButton.styleFrom(
+                backgroundColor: AppColors.accent.withValues(alpha: 0.18),
+                foregroundColor: dark ? AppColors.accent : AppColors.accentOnLight,
+              ),
+            )
+          : Container(
+              padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 5),
+              decoration: BoxDecoration(
+                color: (dark ? Colors.white : Colors.black).withValues(alpha: 0.06),
+                borderRadius: BorderRadius.circular(20),
+              ),
+              child: Row(
+                mainAxisSize: MainAxisSize.min,
+                children: [
+                  Icon(Icons.hourglass_empty_rounded, size: 13, color: muted),
+                  const SizedBox(width: 4),
+                  Text('Pronto', style: TextStyle(color: muted, fontSize: 11.5, fontWeight: FontWeight.w700)),
+                ],
+              ),
+            ),
+    );
+  }
+}
+
+Future<void> sendTeacherEmail(BuildContext context, Contact teacher) async {
+  final ok = await openGmailCompose(to: teacher.email, account: context.read<AuthProvider>().email);
+  if (!ok && context.mounted) {
+    await Clipboard.setData(ClipboardData(text: teacher.email));
+    if (context.mounted) {
+      ScaffoldMessenger.of(context).showSnackBar(
+        const SnackBar(content: Text('No se pudo abrir Gmail; copiamos la dirección.'), behavior: SnackBarBehavior.floating),
+      );
+    }
+  }
+}
+
+/// Ficha del profesor: foto grande, nombre, clase y correo.
+Future<void> showTeacherSheet(BuildContext context, Contact t) {
+  return showModalBottomSheet<void>(
+    context: context,
+    showDragHandle: true,
+    backgroundColor: Theme.of(context).brightness == Brightness.dark ? AppColors.darkCard : Colors.white,
+    shape: const RoundedRectangleBorder(borderRadius: BorderRadius.vertical(top: Radius.circular(28))),
+    builder: (ctx) {
+      final dark = Theme.of(ctx).brightness == Brightness.dark;
+      final fg = dark ? Colors.white : AppColors.textPrimaryLight;
+      final muted = dark ? AppColors.textSecondaryDark : AppColors.textSecondaryLight;
+      return SafeArea(
+        child: Padding(
+          padding: const EdgeInsets.fromLTRB(24, 0, 24, 24),
+          child: Column(
+            mainAxisSize: MainAxisSize.min,
+            children: [
+              TeacherAvatar(teacher: t, radius: 54),
+              const SizedBox(height: 14),
+              Text(t.name, textAlign: TextAlign.center, style: TextStyle(color: fg, fontSize: 20, fontWeight: FontWeight.w800)),
+              const SizedBox(height: 8),
+              Container(
+                padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 6),
+                decoration: BoxDecoration(
+                  color: AppColors.accent.withValues(alpha: 0.18),
+                  borderRadius: BorderRadius.circular(20),
+                ),
+                child: Row(
+                  mainAxisSize: MainAxisSize.min,
+                  children: [
+                    Icon(t.group.icon, size: 16, color: dark ? AppColors.accent : AppColors.accentOnLight),
+                    const SizedBox(width: 6),
+                    Flexible(
+                      child: Text(
+                        t.group.label,
+                        textAlign: TextAlign.center,
+                        style: TextStyle(
+                          color: dark ? AppColors.accent : AppColors.accentOnLight,
+                          fontWeight: FontWeight.w700,
+                          fontSize: 12.5,
+                        ),
+                      ),
+                    ),
+                  ],
+                ),
+              ),
+              const SizedBox(height: 20),
+              Container(
+                padding: const EdgeInsets.fromLTRB(14, 6, 6, 6),
+                decoration: BoxDecoration(
+                  color: dark ? Colors.white.withValues(alpha: 0.06) : AppColors.lightBg,
+                  borderRadius: BorderRadius.circular(16),
+                ),
+                child: Row(
+                  children: [
+                    Icon(Icons.alternate_email_rounded, color: muted, size: 20),
+                    const SizedBox(width: 10),
+                    Expanded(
+                      child: SelectableText(
+                        t.hasEmail ? t.email : 'Correo pendiente',
+                        style: TextStyle(color: t.hasEmail ? fg : muted, fontSize: 14.5),
+                      ),
+                    ),
+                    if (t.hasEmail)
+                      IconButton(
+                        tooltip: 'Copiar correo',
+                        icon: const Icon(Icons.copy_rounded, size: 20),
+                        color: muted,
+                        onPressed: () async {
+                          await Clipboard.setData(ClipboardData(text: t.email));
+                          if (ctx.mounted) {
+                            ScaffoldMessenger.of(ctx).showSnackBar(
+                              const SnackBar(content: Text('Correo copiado'), behavior: SnackBarBehavior.floating),
+                            );
+                          }
+                        },
+                      ),
+                  ],
+                ),
+              ),
+              const SizedBox(height: 16),
+              SizedBox(
+                width: double.infinity,
+                child: FilledButton.icon(
+                  onPressed: t.hasEmail ? () => sendTeacherEmail(ctx, t) : null,
+                  icon: const Icon(Icons.mail_rounded),
+                  label: Text(t.hasEmail ? 'Escribir en Gmail' : 'Correo pendiente'),
+                  style: FilledButton.styleFrom(
+                    backgroundColor: AppColors.accent,
+                    foregroundColor: AppColors.onAccent,
+                    padding: const EdgeInsets.symmetric(vertical: 14),
+                    shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(14)),
+                  ),
+                ),
+              ),
+            ],
+          ),
+        ),
+      );
+    },
+  );
 }
 
 /// Foto del profesor o, si no hay, sus iniciales.
@@ -78,16 +410,23 @@ class TeacherAvatar extends StatelessWidget {
         .split(' ')
         .where((w) => w.isNotEmpty && !w.endsWith('.'))
         .take(2)
-        .map((w) => w[0])
+        .map((w) => w[0].toUpperCase())
         .join();
+    final px = (radius * 6).round();
+    final ImageProvider? photo = teacher.photoUrl.isNotEmpty
+        ? ResizeImage(NetworkImage(teacher.photoUrl), width: px)
+        : teacher.imageAsset.isNotEmpty
+            ? ResizeImage(AssetImage(teacher.imageAsset), width: px)
+            : null;
     return CircleAvatar(
       radius: radius,
-      backgroundColor: const Color(0xFF263042),
-      foregroundImage: teacher.imageAsset.isEmpty
-          ? null
-          : ResizeImage(AssetImage(teacher.imageAsset), width: (radius * 6).round()),
-      onForegroundImageError: teacher.imageAsset.isEmpty ? null : (_, __) {},
-      child: Text(initials, style: TextStyle(color: const Color(0xFFE8A33D), fontSize: radius * 0.7)),
+      backgroundColor: AppColors.accent.withValues(alpha: 0.18),
+      foregroundImage: photo,
+      onForegroundImageError: photo == null ? null : (_, __) {},
+      child: Text(
+        initials,
+        style: TextStyle(color: AppColors.accent, fontSize: radius * 0.7, fontWeight: FontWeight.w800),
+      ),
     );
   }
 }

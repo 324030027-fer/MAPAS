@@ -51,6 +51,13 @@ service cloud.firestore {
       allow write: if isAdmin();
     }
 
+    // Ajustes de los recorridos 360° (rumbo de flechas y recuadros de
+    // salones): todos los ven, solo admins los cambian desde el visor.
+    match /tourOverrides/{doc} {
+      allow read: if true;
+      allow write: if isAdmin();
+    }
+
     // Todo lo demás, cerrado.
     match /{document=**} {
       allow read, write: if false;

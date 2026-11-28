@@ -40,9 +40,6 @@ class TourLabRef {
   /// Nombre del laboratorio en `LabInfo` (encargado, descripción, foto).
   final String labName;
 
-  /// Nombre del laboratorio en los horarios (`LabSchedule.labName`).
-  final String scheduleName;
-
   /// Rumbo (grados) de la pared donde se coloca la ventana de información. Al
   /// entrar al laboratorio la vista queda mirando hacia ahí.
   final double wallYaw;
@@ -53,7 +50,6 @@ class TourLabRef {
   const TourLabRef({
     required this.locationId,
     required this.labName,
-    required this.scheduleName,
     this.wallYaw = 0,
     this.wallPitch = 0,
   });

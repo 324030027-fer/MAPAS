@@ -31,6 +31,8 @@ final Map<String, List<Offset>> kBuildingOutlines = {
     _p(296, 912), _p(240, 882), _p(130, 866),
   ],
   'CANCHA_FUTBOL': [_p(360, 474), _p(476, 477), _p(473, 646), _p(357, 643)],
+  // Edificio de talleres, a la derecha de la cancha de futbol.
+  'EXTRACURRICULAR': [_p(541, 561), _p(646, 553), _p(659, 603), _p(545, 618)],
   'ESTACIONAMIENTO_ALUMNOS': [
     _p(535, 4), _p(722, 4), _p(714, 266), _p(690, 272), _p(522, 244), _p(522, 40),
   ],
@@ -46,6 +48,7 @@ const Map<String, String> kShortNames = {
   'UD1': 'UD1',
   'UD2': 'UD2',
   'CANCHA_FUTBOL': 'Futbol',
+  'EXTRACURRICULAR': 'Extracurricular',
   'ESTACIONAMIENTO_ALUMNOS': 'Estacionamiento',
 };
 

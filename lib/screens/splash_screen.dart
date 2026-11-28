@@ -3,6 +3,7 @@ import 'package:go_router/go_router.dart';
 import 'dart:async';
 
 import '../core/theme/app_colors.dart';
+import '../widgets/brand.dart';
 import '../widgets/glass.dart';
 
 class SplashScreen extends StatefulWidget {
@@ -51,33 +52,7 @@ class _SplashScreenState extends State<SplashScreen> with SingleTickerProviderSt
           children: [
             ScaleTransition(
               scale: _animation,
-              child: Container(
-                padding: const EdgeInsets.all(20),
-                decoration: const BoxDecoration(
-                  color: Colors.white,
-                  shape: BoxShape.circle,
-                  boxShadow: [BoxShadow(color: Colors.black26, blurRadius: 20, spreadRadius: 5)]
-                ),
-                child: Image.asset(
-                  'assets/logoapp.png',
-                  width: 72,
-                  height: 72,
-                  errorBuilder: (_, __, ___) => const Icon(Icons.map_rounded, size: 72, color: AppColors.primary),
-                ),
-              ),
-            ),
-            const SizedBox(height: 24),
-            FadeTransition(
-              opacity: _controller,
-              child: const Text(
-                "NULLCORE MAPS",
-                style: TextStyle(
-                  color: Colors.white,
-                  fontSize: 28,
-                  fontWeight: FontWeight.bold,
-                  letterSpacing: 2.0,
-                ),
-              ),
+              child: const BrandLogo(height: 200),
             ),
             const SizedBox(height: 50),
             const CircularProgressIndicator(color: Colors.white),
