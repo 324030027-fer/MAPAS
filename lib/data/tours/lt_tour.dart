@@ -38,9 +38,9 @@ final Tour ltTour = Tour(
     TourEdge('P1', 140, 'P3', 180),
     TourEdge('P3', 0, 'BH', -55),
     TourEdge('BH', 37, 'EP', -85),
-    TourEdge('EP', 90, 'BM', -45),
-    TourEdge('BM', 45, 'P4', -90),
-    TourEdge('P4', 90, 'P2', -90),
+    TourEdge('EP', 90, 'BM', -39.9),
+    TourEdge('BM', 45, 'P4', -85.2),
+    TourEdge('P4', 90, 'P2', -83.1),
     TourEdge('P2', 90, 'E3', -45),
     TourEdge('E3', 42, 'E1', -87),
     // Ramales a laboratorios (siempre al final de los enlaces del pasillo).

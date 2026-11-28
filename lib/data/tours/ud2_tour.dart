@@ -47,25 +47,25 @@ final Tour ud2Tour = Tour(
   ],
   edges: const [
     // (A, rumbo en A hacia B, B, rumbo en B hacia A)
-    TourEdge('U2', 175, 'CU', -100),
-    TourEdge('CU', 170, 'AUD', 85),
-    TourEdge('AUD', -110, 'ID1', 125),
-    TourEdge('ID1', 95, 'MvF', -100),
-    TourEdge('CU', 100, 'ES1', -40),
-    TourEdge('ES1', 25, 'ES2', -175),
+    TourEdge('U2', 174.8, 'CU', -82.5),
+    TourEdge('CU', 136.8, 'AUD', 96),
+    TourEdge('AUD', -98.6, 'ID1', 120.7),
+    TourEdge('ID1', 42.7, 'MvF', -79.3),
+    TourEdge('CU', 104.3, 'ES1', -15.1),
+    TourEdge('ES1', 34.6, 'ES2', -175),
     // Provisional (falta a#ya# y WC).
-    TourEdge('CU', -10, 'A4322', -55),
-    TourEdge('A4322', 95, 'A56', -95),
-    TourEdge('A56', 80, 'A7', -95),
-    TourEdge('A7', 75, 'U1', 0),
-    TourEdge('ES2', -110, 'A1718', -165),
-    TourEdge('A1718', 5, 'A1920', -100),
-    TourEdge('A1920', 70, 'A21CN', -80),
+    TourEdge('CU', 71.4, 'A4322', -55),
+    TourEdge('A4322', 101.3, 'A56', -84.6),
+    TourEdge('A56', 80, 'A7', -86.6),
+    TourEdge('A7', 91.1, 'U1', 0),
+    TourEdge('ES2', -84.2, 'A1718', -155.5),
+    TourEdge('A1718', 19.7, 'A1920', -79.2),
+    TourEdge('A1920', 83.1, 'A21CN', -53.1),
     // Provisional (falta u#u# y WC de planta alta).
-    TourEdge('ES2', 80, 'A111023', -100),
-    TourEdge('A111023', 75, 'A1213', -95),
+    TourEdge('ES2', 92.5, 'A111023', -75),
+    TourEdge('A111023', 80.5, 'A1213', -81.2),
     // Ramal al laboratorio (al final de los enlaces del pasillo).
-    TourEdge('MvF', 0, 'MOV', -160),
+    TourEdge('MvF', -2.7, 'MOV', -45.3),
   ],
   labs: const {
     'MOV': TourLabRef(

@@ -171,7 +171,7 @@ class _PanoramaViewerState extends State<PanoramaViewer> {
     return room != null && room.tourStopId == null ? [room] : const [];
   }
 
-  RoomAnchor _anchorOf(Room r, TourOverridesProvider o) => o.roomAnchor(r.id) ?? (yaw: r.initialYaw, pitch: kRoomTagPitch);
+  RoomAnchor _anchorOf(Room r, TourOverridesProvider o) => o.roomAnchor(r.id) ?? (yaw: r.initialYaw, pitch: r.tagPitch);
 
   // ---------------------------------------------------------------------------
   // Editor

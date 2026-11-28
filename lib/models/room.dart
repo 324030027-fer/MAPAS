@@ -27,6 +27,7 @@ class Room {
     this.kind = RoomKind.salon,
     this.pano,
     this.initialYaw = 0,
+    this.tagPitch = 4,
     this.tourStopId,
     this.aliases = const [],
   });
@@ -56,6 +57,10 @@ class Room {
   /// Rumbo (grados, −180 a 180) hacia donde se mira al entrar; conviene que
   /// sea el pizarrón o el frente del salón.
   final double initialYaw;
+
+  /// Altura (grados) del recuadro flotante del salón: a media puerta.
+  /// El recuadro se coloca en [initialYaw] a esta altura.
+  final double tagPitch;
 
   /// Si el salón también es parada del recorrido del edificio, su id ahí:
   /// se entra al recorrido en ese punto y se puede seguir caminando.
